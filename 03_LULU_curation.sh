@@ -137,6 +137,11 @@ FNR==1{
     # rajouter colonnes samples du fichier LULU
     for(i=2;i<=NF;i++) printf "\t%s",$i
     print ""
-}'  $OUTPUT_DIR/tmp_OTU_table_full.txt $OUTPUT_DIR/OTU_table_LULU.txt > $OUTPUT_DIR/OTU_table_LULU_full.txt
+}'  $OUTPUT_DIR/tmp_OTU_table_full.txt $OUTPUT_DIR/OTU_table_LULU.txt > $OUTPUT_DIR/tmp2_OTU_table_LULU_full.txt
+
+head -1 $OUTPUT_DIR/tmp2_OTU_table_LULU_full.txt > $OUTPUT_DIR/tmp_header
+sed 1d  $OUTPUT_DIR/tmp2_OTU_table_LULU_full.txt | sort -k2 -rn > $OUTPUT_DIR/tmp3_OTU_table_LULU_full.txt
+
+cat $OUTPUT_DIR/tmp_header $OUTPUT_DIR/tmp3_OTU_table_LULU_full.txt > $OUTPUT_DIR/OTU_table_LULU_full.txt
 
 rm $OUTPUT_DIR/tmp*
