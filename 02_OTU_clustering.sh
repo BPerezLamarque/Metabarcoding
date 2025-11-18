@@ -324,6 +324,9 @@ FILTERED="${OTU_TABLE/.txt/_filtered.txt}"
 head -n 1 "${OTU_TABLE}" > "${FILTERED}"
 cat "${OTU_TABLE}" | awk '$5 == "N" && $4 >= 100 && $2 > 1' >> "${FILTERED}"
 
+#In order to prepare the LULU step
+cut -f3,9- "${FILTERED}" > $OUTPUT_DIR/pre_LULU_match.txt
+
 rm $OUTPUT_DIR/taxonomy_OTU_usearch_sorted.txt
 #python3 $DIR/$path_scripts/identity_distribution.py ../$OTU_TABLE
 
