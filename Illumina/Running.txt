@@ -1,0 +1,21 @@
+Step 01:
+sbatch 01_merging_table.sh -i path/to/directory/*.fastq -o ./OTU_PRECLUSTERING -m map_file.txt -f GGAAGTAAAAGTCGTAACAAGG -r CAAGAGATCCGTTGTTGAAAGTK
+
+mapping file must be like this (not necessary in this order): 
+Sample  barcodeRev      barcodeFw       primerRev       primerFw        combineFw       combineRev
+B01     ACACACAC        ACACACAC        CAAGAGATCCGTTGTTGAAAGTK GGAAGTAAAAGTCGTAACAAGG  ACACACACCAAGAGATCCGTTGTTGAAAGTK GGAAGTAAAAGTCGTAACAAGGACACACAC
+M5_10   ACAGCACA        ACACACAC        CAAGAGATCCGTTGTTGAAAGTK GGAAGTAAAAGTCGTAACAAGG  ACAGCACACAAGAGATCCGTTGTTGAAAGTK GGAAGTAAAAGTCGTAACAAGGACACACAC
+M7_4    GTGTACAT        ACACACAC        CAAGAGATCCGTTGTTGAAAGTK GGAAGTAAAAGTCGTAACAAGG  GTGTACATCAAGAGATCCGTTGTTGAAAGTK GGAAGTAAAAGTCGTAACAAGGACACACAC
+
+Step 02:
+Vsearch clustering (0.97) without unoise step + sintax assignation with a cutoff of 1:
+sbatch 02_OTU_clustering -i OTU_PRECLUSTERING/Demultiplexed_data/ -d Path_to_database/*.fasta -s python_scripts/ -c 0.97 -o OTU_CLUSTERING_VSEARCH_sintax -p 1 -u "false" -m "sintax" -p 1
+
+Vsearch clustering (0.97) with unoise step + usearch_global assignation
+sbatch 02_OTU_clustering -i Path_to/Demultiplexed_data/ -d Path_to_database/*.fasta -s python_scripts/ -c 0.97 -o OTU_CLUSTERING_VSEARCH_usearch -p 1 -u "true" -m "usearch"  
+
+Swarm clustering without unoise step + usearch_global assignation
+sbatch 02_OTU_clustering -i Path_to/Demultiplexed_data/ -d Path_to_database/*.fasta -s python_scripts/ -o OTU_CLUSTERING_SWARM_usearch -p 1 -u "false" -m "usearch" 
+
+Step 03:
+sbatch 03_LULU_curation.sh -f  OTU_CLUSTERING_SWARM_uearch/reads_OTU_nonchimeras.fasta -t OTU_CLUSTERING_SWARM_usearch/pre_LULU_match.txt -o SWARM_USEARCH_LULU_OTU_CLUSTERING -c OTU_CLUSTERING_SWARM_usearch/OTU_table_OTU_filtered.txt
