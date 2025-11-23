@@ -2,7 +2,10 @@
 
 
 This GitHub repository provides pipelines for conducting bioinformatic analyses of fungal metabarcoding using both Illumina short reads and PacBio long reads. The Illumina workflow is derived from the methods developed by Frédéric Mahé (https://github.com/torognes/vsearch), whereas the PacBio workflow (NextITS) is based on the work of Vladimir Mikryukov (https://github.com/vmikk/NextITS; documentation: https://next-its.github.io/).
+
+
 The development of these pipelines was supported by funding from the MITI DEFIS project (PI: Mélanie Roy).
+
 
 **Contributors:** Benoît Perez-Lamarque (benoit.perez.lamarque@gmail.com), Valentin Etienne, and Florian Tilliet. 
 
@@ -10,9 +13,9 @@ The development of these pipelines was supported by funding from the MITI DEFIS 
 
 
 
-# Step 0: Preparing the database for taxonomic assignment (Illumina and PacBio)
+# Step 0: Preparing the database for taxonomic assignment (Illumina and PacBio):
 
-This step prepares a reference database for taxonomic assignment by trimming primer sequences from the input FASTA file using **Cutadapt**.
+This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/00_prepare_database.sh) prepares a reference database for taxonomic assignment by trimming primer sequences from the input FASTA file using **Cutadapt**.
 
 **Requirements:**
 * **Software:** Cutadapt ≥ 5.0
@@ -43,11 +46,11 @@ bash cut_database.sh \
 
 
 
-# Analyzing an Illumina dataset
+# Analyzing an Illumina dataset:
 
-## Step 1: Demultiplexing and quality control
+## Step 1: Demultiplexing and quality control:
 
-This step merges paired-end reads, demultiplexes them, and dereplicates sequences at the sample level. It also performs quality filtering and evaluates the quality of the merged reads using **FastQC**.
+This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/01_demultiplexing_QC.sh) merges paired-end reads, demultiplexes them, and dereplicates sequences at the sample level. It also performs quality filtering and evaluates the quality of the merged reads using **FastQC**.
 
 **Required software:**
 * Cutadapt ≥ 5.0
@@ -91,9 +94,9 @@ bash 01_demultiplexing_QC.sh \
 
 
 
-## Step 2: OTU clustering and taxonomic assignment
+## Step 2: OTU clustering and taxonomic assignment:
 
-This step performs OTU clustering using **VSEARCH** and generates a OTU table. Depending on the selected options, it can also run **UNOISE denoising**, **swarm clustering**, and **taxonomic assignment** using **SINTAX** or **VSEARCH**.
+This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/02_OTU_clustering.sh) performs OTU clustering using **VSEARCH** and generates a OTU table. Depending on the selected options, it can also run **UNOISE denoising**, **swarm clustering**, and **taxonomic assignment** using **SINTAX** or **VSEARCH**.
 
 **Required software:**
 * VSEARCH ≥ 2.29.3
@@ -143,9 +146,9 @@ bash 02_OTU_clustering \
 
 
 
-## Step 3 — Running LULU for OTU table curation
+## Step 3: Running LULU for OTU table curation:
 
-This step refines the OTU table using **LULU**, which relies on sequence similarity and co-occurrence patterns to curate inflated OTU sets.
+This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/03_LULU_curation.sh) refines the OTU table using **LULU**, which relies on sequence similarity and co-occurrence patterns to curate inflated OTU sets.
 
 **Required software:**
 * VSEARCH ≥ 2.29
@@ -178,9 +181,122 @@ bash 03_LULU_curation.sh \
 
 
 
-# Analyzing a PacBio dataset: 
 
-The scripts 1 to 3 can be run successively for 
+
+# Analyzing a PacBio dataset:
+
+The PacBio workflow (NextITS) is based on the work of **Vladimir Mikryukov** ([https://github.com/vmikk/NextITS](https://github.com/vmikk/NextITS)).
+Additional documentation for Steps 1 and 2 is available at: [https://next-its.github.io/](https://next-its.github.io/)
+
+**Citation:**
+Mikryukov V., Anslan S., Tedersoo L. *NextITS: a pipeline for metabarcoding fungi and other eukaryotes with full-length ITS sequenced with PacBio.*
+[https://github.com/vmikk/NextITS](https://github.com/vmikk/NextITS) — DOI: 10.5281/zenodo.15074881
+
+
+
+## Step 1: Quality control and artefact removal:
+
+This step runs the first module of the NextITS pipeline, performing quality filtering, primer trimming, homopolymer correction, and artefact removal.
+
+**Required software/modules:**
+
+* Nextflow ≥ 25.04.0
+* Singularity ≥ 3.9.9
+* Java ≥ 17.0.6
+
+### Getting and preparing NextITS
+
+```bash
+# Download the latest version of NextITS
+nextflow pull vmikk/NextITS
+
+# Download the container image containing all dependencies
+singularity pull nextits.sif docker://vmikk/nextits:1.1.0
+
+# Display available options and help
+nextflow run vmikk/NextITS --help
+```
+
+### Running Step 1:
+
+Adjust primer sequences and the `its_region` parameter if different from the defaults using the "full" ITS region.
+Using a chimera reference database is optional (denovo detection only is also possible).
+
+```bash
+nextflow run vmikk/NextITS -r main \
+  -resume \
+  --demultiplexed true \
+  --step "Step1" \
+  --input "$(pwd)/path/to/fastq_files" \
+  --primer_forward GTACACACCGCCCGTCG \
+  --primer_reverse CGCCTSCSCTTANTDATATGC \
+  --its_region "full" \
+  --hp "true" \
+  --chimera_methods "ref,denovo" \
+  --chimera_db "$(pwd)/path/to/chimera_database" \
+  --tj "true" \
+  --outdir "Step1_Results/test" \
+  -with-singularity "$(pwd)/nextits.sif"
+```
+
+---
+
+## Step 2: OTU clustering:
+
+This step performs denoising (UNOISE), OTU clustering at 97% identity using VSEARCH, and OTU curation using **LULU**.
+
+```bash
+nextflow run vmikk/NextITS -r main \
+  --step "Step2" \
+  --data_path "$(pwd)/Step1_Results/" \
+  --preclustering "unoise" \
+  --clustering "vsearch" \
+  --otu_id 0.97 \
+  --otu_iddef 2 \
+  --lulu "true" \
+  --outdir "Step2_vsearch" \
+  -with-singularity "$(pwd)/../nextits.sif"
+```
+
+---
+
+## Step 3: Taxonomic assignation:
+
+This step performs taxonomic assignment using **VSEARCH**, with either the **SINTAX** or **usearch_global** algorithm.
+
+**Required software:**
+* VSEARCH ≥ 2.29
+
+
+### Assignation with SINTAX:
+
+```bash
+vsearch --sintax Path/to/fasta_file_from_step_2 \
+    --db "$PATH_DIR_DB/$NAME_DB" \
+    --sintax_cutoff 0.5 \
+    --tabbedout Path/to/output_file \
+    --strand plus \
+    --threads 1
+```
+
+### Assignation with usearch_global:
+
+```bash
+vsearch --usearch_global Path/to/fasta_file_after_step_2 \
+    --db "$PATH_DIR_DB/$NAME_DB" \
+    --id 0.7 \
+    --iddef 2 \
+    --strand plus \
+    --threads 1 \
+    --dbmask none \
+    --qmask none \
+    --rowlen 0 \
+    --notrunclabels \
+    --userfields query+id+target \
+    --maxaccepts 1 \
+    --maxrejects 32 \
+    --userout path/to/output_file
+```
 
 
 

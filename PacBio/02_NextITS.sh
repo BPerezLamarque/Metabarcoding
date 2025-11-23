@@ -8,7 +8,7 @@
 #SBATCH --time=72:00:00
 #SBATCH --mem=36G
 
-#Module à télécharger
+
 module load bioinfo/Nextflow/25.04.0
 module load containers/singularity/3.9.9 
 module load devel/java/17.0.6

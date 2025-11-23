@@ -8,7 +8,7 @@
 #SBATCH --time=72:00:00
 #SBATCH --mem=36G
 
-#Module à télécharger
+
 module load bioinfo/Nextflow/25.04.0
 module load containers/singularity/3.9.9 
 module load devel/java/17.0.6
@@ -22,7 +22,7 @@ singularity pull nextits.sif docker://vmikk/nextits:1.1.0
 #To get the help message with all the option and their meanings
 nextflow run vmikk/NextITS --help
 
-#Change the primer if it is not the one used by Tedersoo and also adapt the --its_region
+#Change the primer if it is not the one used for the full ITS region and also adapt the --its_region
 #Not mandatory to use a chimera database, only denovo can be done.
 nextflow run vmikk/NextITS -r main \
   -resume \
