@@ -7,7 +7,7 @@ This GitHub repository provides pipelines for conducting bioinformatic analyses 
 The development of these pipelines was supported by funding from the MITI DEFIS project (PI: Mélanie Roy).
 
 
-**Contributors:** Benoît Perez-Lamarque (benoit.perez.lamarque@gmail.com), Valentin Etienne, and Florian Tilliet. 
+**Contributors:** Valentin Etienne, Florian Tilliet, and Benoît Perez-Lamarque (benoit.perez.lamarque@gmail.com). 
 
 
 
@@ -86,7 +86,7 @@ If demultiplexing is needed, the mapping file (`mapping_file.txt`) must contain 
 **Format example:**
 
 ```
-Sample   barcodeRev   barcodeFw   primerRev                   primerFw                   combineFw                                  combineRev
+Sample   barcodeFw    barcodeRev  primerFw                   primerRev                  combineFw                                  combineRev
 B01      ACACACAC     ACACACAC    CAAGAGATCCGTTGTTGAAAGTK     GGAAGTAAAAGTCGTAACAAGG     ACACACACCAAGAGATCCGTTGTTGAAAGTK            GGAAGTAAAAGTCGTAACAAGGACACACAC
 M5_10    ACAGCACA     ACACACAC    CAAGAGATCCGTTGTTGAAAGTK     GGAAGTAAAAGTCGTAACAAGG     ACAGCACACAAGAGATCCGTTGTTGAAAGTK            GGAAGTAAAAGTCGTAACAAGGACACACAC
 M7_4     GTGTACAT     ACACACAC    CAAGAGATCCGTTGTTGAAAGTK     GGAAGTAAAAGTCGTAACAAGG     GTGTACATCAAGAGATCCGTTGTTGAAAGTK            GGAAGTAAAAGTCGTAACAAGGACACACAC
