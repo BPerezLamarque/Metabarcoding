@@ -5,22 +5,18 @@
 ## It requires the following parameters: path to the directory containing input fastq files, and mapping file.
 ## For demultiplexing, it requires a mapping file with the following columns: SampleID, barcodeFw, primerFw, primerRev, barcodeRev.
 
-module purge
-module load bioinfo/Cutadapt/5.0
-module load bioinfo/VSEARCH/2.29.3
-module load bioinfo/FastQC/0.12.1
 
 
 while getopts "o:i:d:m:f:r:" option
 do
         case $option in
                 h)
-                    echo "Usage: $0 -i <input_files> -o <output_directory> -m <mapping_file> -f <primer_f> -r <primer_r>"
+                    echo "Usage: $0 -i <input_files> -o <output_directory> -m <mapping_file>"
                     echo "  -i  Input directory containing fastq files (can be compressed; can be a part of the files names, e.g. '../raw_reads/ITS*.fastq')"
-                    echo "  -o  Output directory (default: ./OTU_PRECLUSTERING)"
+                    echo "  -o  Output directory (default: ./01_OTU_PRECLUSTERING)"
                     echo "  -m  Mapping file (tab-separated) with the following columns: SampleID, barcodeFw, primerFw, primerRev, barcodeRev"
-		    echo "  -f	The primer forward sequence "
-		    echo"   -r	The primer reverse sequence "
+		    		echo "  -f	The primer forward sequence "
+		    		echo"   -r	The primer reverse sequence "
                     echo "  -h  Show this help message"
                     exit 0
                     ;;
@@ -28,35 +24,20 @@ do
                     OUTPUT_DIR="$OPTARG"
                     ;;
                 i)
-		    INPUT_FILES="$OPTARG"
+		    		INPUT_FILES="$OPTARG"
                     ;;
                 m)
                     MAPPING="$OPTARG"
-		    ;;
-                f)
-                    PRIMER_F="$OPTARG"
-                    ;;
-                r)
-                    PRIMER_R="$OPTARG"
-                    ;;
+		    		;;
         esac
 done
 
 
 if [ -z "$OUTPUT_DIR" ]; then
-    OUTPUT_DIR="$(pwd)/OTU_PRECLUSTERING"
+    OUTPUT_DIR="$(pwd)/01_OTU_PRECLUSTERING"
     mkdir -p "$OUTPUT_DIR"
 fi
 
-if [ -z "$PRIMER_F" ]; then
-    echo "Error: An forward primer must be specified."
-    exit 1
-fi
-
-if [ -z "$PRIMER_R" ]; then
-    echo "Error: An reverse primer must be specified."
-    exit 1
-fi
 
 # Reverse complement the reverse primer
 ANTI_PRIMER_R=$( echo "${PRIMER_R}" | tr ACGTacgtYyMmRrKkBbVvDdHh TGCAtgcaRrKkYyMmVvBbHhDd | rev )
@@ -81,6 +62,7 @@ vsearch \
     --fastq_chars $OUTPUT_DIR/temp_decompressed.fastq 2> ${OUTPUT}
 QUALITY_ENCODING=$(grep "Guess: Original" $OUTPUT | awk -F'[+]' '{print $2}' | awk -F')' '{print $1}')
 
+
 # Merge the paired-end reads
 
 mkdir -p $OUTPUT_DIR/merged_reads/
@@ -101,6 +83,7 @@ for sample in $(cat $OUTPUT_DIR/list_sample.txt); do
         --quiet 2>> ${OUTPUT/.fastq/.log}
     
 done
+
 
 # Checking the quality with FASTQC
 

@@ -4,9 +4,6 @@
 # It requires the following software: Cutadapt 5.0.
 # It also requires the following parameters: raw database input fasta file (can be compressed), forward primer, reverse primer.
 
-# module purge
-# module load bioinfo/Cutadapt/5.0
-
 
 while getopts "hi:o:f:r:n:x:y:l:" option
 do
@@ -18,8 +15,8 @@ do
                     echo "  -r  Reverse primer sequence"
                     echo "  -o  Output directory (default: current directory)"
                     echo "  -n  Name of the database"
-                    echo "  -x  is the forward primer obligatory (true or false)"
-                    echo "  -y  is the reverse primer obligatory (true or false)"
+                    echo "  -x  indicates whether finding (and extracting) the forward primer is mandatory for keeping the sequence (true or false)"
+                    echo "  -y  indicates whether finding (and extracting) the reverse primer is mandatory for keeping the sequence (true or false)"
                     echo "  -l  minimum length of the retained sequences"
 		    echo "  -t  Database type: 'usearch' or 'sintax' (default: 'usearch')"
 		    exit 0
@@ -87,7 +84,7 @@ if [ -z "$DIR" ]; then
     DIR="$(pwd)"
 fi
 
-if [ -z "$DB_TYPE" ]; then
+if [ -t "$DB_TYPE" ]; then
     DB_TYPE="usearch"
 fi
 
@@ -125,7 +122,7 @@ if  [ "$DB_TYPE" = "usearch" ]; then
 		sed '/^>/ s/;/|/g ; /^>/ s/ /_/g' > "${OUTPUT}"
 else
 	${command} "${INPUT}" | sed '/^>/ ! s/U/T/g' | \
-                ${CUTADAPT} -g "${PRIMER_F}" -O "${MIN_F}" - 2> "${LOG}" | \
+        ${CUTADAPT} -g "${PRIMER_F}" -O "${MIN_F}" - 2> "${LOG}" | \
 		sed '/^>/ s/|/;/g ; /^>/ s/ /_/g' > "${OUTPUT}"
 
 
@@ -142,6 +139,6 @@ if  [ "$DB_TYPE" = "usearch" ]; then
 		sed '/^>/ s/;/|/g ; /^>/ s/ /_/g' > "${OUTPUT_R}"
 else
 	${command} "${OUTPUT}" | sed '/^>/ ! s/U/T/g' | \
-                ${CUTADAPT} -a "${ANTI_PRIMER_R}" -O "${MIN_R}" - 2> "${LOG_R}" | \
+     	${CUTADAPT} -a "${ANTI_PRIMER_R}" -O "${MIN_R}" - 2> "${LOG_R}" | \
 		sed '/^>/ s/|/;/g ; /^>/ s/ /_/g' > "${OUTPUT_R}"
 rm $OUTPUT

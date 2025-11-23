@@ -1,32 +1,22 @@
 #!/bin/bash
 
-#SBATCH --partition=workq
-#SBATCH --output=./02.out
-#SBATCH --error=./02.err
-#SBATCH --cpus-per-task=5
-#SBATCH --time=24:00:00
-#SBATCH --mem=36G
+
 
 # This script performs OTU clustering using VSEARCH and generates a contingency table.
 # It requires the following software: VSEARCH 2.29.3, Python 3.11.1.
+# Depending on the options, it may also require swarm 3.1.3, SeqKit 2.9.0 and R 4.4.0. 
 # It also requires the following parameters: path to the directory containing input fasta files, path to the database, path to the scripts, output directory, abundance threshold, and identity percentage.
 
-module purge
-module load bioinfo/VSEARCH/2.29.3
-module load devel/python/Python-3.11.1
-module load bioinfo/swarm/3.1.3
-module load bioinfo/SeqKit/2.9.0
-module load statistics/R/4.4.0
 
-nb_cores=2
+nb_cores=1
 OUTPUT_DIR=OTU_CLUSTERING
-IDENTITY_PERCENTAGE=0.97
-CUTOFF_PROB=0.01
-path_scripts=$(pwd)/python_scripts
-METHOD="usearch"
-RESUME="true"
+path_scripts=$(pwd)/python_scripts/
 UNOISE="true"
 CLUSTER="vsearch"
+IDENTITY_PERCENTAGE=0.97
+METHOD="vsearch"
+CUTOFF_PROB=0.5
+RESUME="true"
 TAGJUMP="true"
 
 while getopts "i:s:d:o:c:m:p:r:u:v:t:" option
@@ -34,23 +24,24 @@ do
         case $option in
                 h)
                     echo "Usage: $0 -i <input_files> -s <path_scripts> -d <path_db> -o <output_directory> -c <identity_percentage> -m <method> -p <proba_cutoff> -r <resume> -v <cluster_method> -t <tagjump>"
-		    echo "E.g: sbatch 02_OTU_clustering.sh -i Path_to/Demultiplexed_data/ -d Path_to_database/*.fasta -c 0.97 -o OTU_CLUSTERING -p 1 -u "false" -m "sintax" "
+		    		echo "E.g: sbatch 02_OTU_clustering.sh -i Path_to/Demultiplexed_data/ -d Path_to_database/*.fasta -c 0.97 -o OTU_CLUSTERING -p 1 -u "false" -m "sintax" "
                     echo "  -i  Input directory containing fasta files (can be compressed)"
-                    echo "  -d  Path to the database"
-                    echo "  -o  Output directory (default: OTU_CLUSTERING)"
-                    echo "  -c  Identity percentage for clustering (default: 0.97)"
-                    echo "  -h  Show this help message"
-		    echo "  -m  method for taxonomic assignation: sintax or usearch (default: "usearch")"
-		    echo "  -p  Cutoff for sintax probability for assignation (default: 0.0)"
-		    echo "  -r  resume where the last outpute file was created (default: true)"
-		    echo "  -u  Do a denoising step with unoise (default = true)"
-		    echo "  -s  Path to your python scripts"
-		    echo "  -v  Clustering method: vsearch or swarm (default = "vsearch")"
-		    echo "  -t  Do a TagJump filtration (default = true)"
+                    echo "  -o  Output directory (default: 02_OTU_CLUSTERING)"
+					echo "  -s  Path to the python scripts"
+		   		 	echo "  -u  Do a denoising step before clustering with unoise (default = true)"
+		    		echo "  -v  Clustering method: vsearch or swarm (default = "vsearch")"
+		    		echo "  -c  Identity percentage for clustering (default: 0.97)"
+		    		echo "  -m  Method for taxonomic assignation: sintax or vsearch (default: "vsearch")"
+		    		echo "  -d  Path to the database for taxonomic assignation"
+		    		echo "  -p  Cutoff for sintax probability for assignation (default: 0.5)"
+		    		echo "  -r  resume where the last output file was created (default: true)"
+		    		echo "  -t  Do a TagJump filtration (default = true)"
+                    echo "  -h  Show this help message"		    		
+                    echo "  -n  Number of cores (default = 1)"
                     exit 0
                     ;;
                 i)
-		    INPUT_FILES="$OPTARG"
+		    		INPUT_FILES="$OPTARG"
                     ;;
                 d)
                     path_to_db="$OPTARG"
@@ -61,30 +52,41 @@ do
                 c)
                     IDENTITY_PERCENTAGE="$OPTARG"
                     ;;
-		m)
-		    METHOD="$OPTARG"
-	       	    ;;
-		p)
-		    CUTOFF_PROB="$OPTARG"
-		    ;;
-		r)
-		    RESUME="$OPTARG"
-		    ;;
-		u)
-		    UNOISE="$OPTARG"
-		    ;;
-		v)
-		    CLUSTER="$OPTARG"
-		    ;;
-		t)
-		    TAGJUMP="$OPTARG"
-		    ;;
+				m)
+		    		METHOD="$OPTARG"
+	       	    	;;
+				p)
+		    		CUTOFF_PROB="$OPTARG"
+		    		;;
+				r)
+		    		RESUME="$OPTARG"
+		    		;;
+				u)
+		    		UNOISE="$OPTARG"
+		    		;;
+				v)
+		    		CLUSTER="$OPTARG"
+		    		;;
+				t)
+		    		TAGJUMP="$OPTARG"
+		    		;;
+		    	n)
+		    		nb_cores="$OPTARG"
+		    		;;
         esac
 done
 
 if [ -v "$path_to_db" ]; then
     echo "Warning: No database provided. Skipping taxonomic assignment."
 fi
+
+
+if [ -z "$OUTPUT_DIR" ]; then
+    OUTPUT_DIR="$(pwd)/02_OTU_CLUSTERING"
+    mkdir -p "$OUTPUT_DIR"
+fi
+
+
 
 DIR="$(pwd)"
 cd $DIR
@@ -255,11 +257,11 @@ else
 		--nonchimeras $OUTPUT_DIR/reads_OTU_nonchimeras.fasta
 fi
 
-if [ "$RESUME" = "true" ] && [ -s "$OUTPUT_DIR/taxonomy_OTU_usearch.txt" ] || [ -s "$OUTPUT_DIR/taxonomy_OTU_sintax.txt" ];then
+if [ "$RESUME" = "true" ] && [ -s "$OUTPUT_DIR/taxonomy_OTU_vsearch.txt" ] || [ -s "$OUTPUT_DIR/taxonomy_OTU_sintax.txt" ];then
 	echo "Output file already exists, skipping this step."
 else
-	if [ "$METHOD" = "usearch" ]; then
-		echo "Running usearch assignation with vsearch on: $OUTPUT_DIR/reads_OTU_nonchimeras.fasta"
+	if [ "$METHOD" = "vsearch" ]; then
+		echo "Running vsearch assignation with vsearch on: $OUTPUT_DIR/reads_OTU_nonchimeras.fasta"
 		vsearch --usearch_global $OUTPUT_DIR/reads_OTU_nonchimeras.fasta \
     			--threads $nb_cores \
     			--dbmask none \
@@ -272,7 +274,7 @@ else
     			--db $path_to_db \
     			--id 0.7 \
     			--iddef 2 \
-    			--userout $OUTPUT_DIR/taxonomy_OTU_usearch.txt
+    			--userout $OUTPUT_DIR/taxonomy_OTU_uvearch.txt
 
 	elif [ "$METHOD" = "sintax" ]; then
 		echo "Running sintax assignation with vsearch on: $OUTPUT_DIR/reads_OTU_nonchimeras.fasta"
@@ -301,9 +303,9 @@ fi
 
 if [ "$METHOD" = "sintax" ]; then
 	ASSIGNMENTS="$OUTPUT_DIR/taxonomy_OTU_sintax.txt"
-elif [ "$METHOD" = "usearch" ]; then
-	cat $OUTPUT_DIR/taxonomy_OTU_usearch.txt | sort -k2 -n > $OUTPUT_DIR/taxonomy_OTU_usearch_sorted.txt
-	ASSIGNMENTS="$OUTPUT_DIR/taxonomy_OTU_usearch_sorted.txt"
+elif [ "$METHOD" = "vsearch" ]; then
+	cat $OUTPUT_DIR/taxonomy_OTU_vsearch.txt | sort -k2 -n > $OUTPUT_DIR/taxonomy_OTU_vsearch_sorted.txt
+	ASSIGNMENTS="$OUTPUT_DIR/taxonomy_OTU_vsearch_sorted.txt"
 fi
 
 OTU_TABLE="$OUTPUT_DIR/OTU_table_OTU.txt"
@@ -322,12 +324,10 @@ python3 \
    
 FILTERED="${OTU_TABLE/.txt/_filtered.txt}"
 head -n 1 "${OTU_TABLE}" > "${FILTERED}"
-cat "${OTU_TABLE}" | awk '$5 == "N" && $4 >= 100 && $2 > 1' >> "${FILTERED}"
+cat "${OTU_TABLE}" | awk '$5 == "N" && $4 >= 50' >> "${FILTERED}"
 
 #In order to prepare the LULU step
 cut -f3,9- "${FILTERED}" > $OUTPUT_DIR/pre_LULU_match.txt
 
-rm $OUTPUT_DIR/taxonomy_OTU_usearch_sorted.txt
-#python3 $DIR/$path_scripts/identity_distribution.py ../$OTU_TABLE
+rm $OUTPUT_DIR/taxonomy_OTU_vsearch_sorted.txt
 
-# cd $DIR

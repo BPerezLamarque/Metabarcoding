@@ -1,8 +1,4 @@
 #!/bin/bash
-#SBATCH --partition=workq
-#SBATCH --cpus-per-task=8
-#SBATCH --time=24:00:00
-#SBATCH --mem=30G
 
 # Requirements:
 # - vsearch >= 2.29
@@ -17,9 +13,6 @@
  #--minimum_ratio_type STRING          "min" or "avg" abundance ratio ("min")
  #--minimum_relative_cooccurence FLOAT relative father-son spread (0.95)
 
-#module purge
-module load bioinfo/VSEARCH/2.29.3
-module load compilers/gcc/12.2.0
 
 
 
