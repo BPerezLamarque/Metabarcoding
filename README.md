@@ -13,19 +13,17 @@ The development of these pipelines was supported by funding from the MITI DEFIS 
 
 # Table of Contents
 
-* [Introduction](#introduction)
-
-* [Step 0 — Preparing the database](#step-0--preparing-the-database-for-taxonomic-assignment)
+* [Step 0: Preparing the database](#step-0--preparing-the-database-for-taxonomic-assignment)
   
 * [Analyzing an Illumina dataset](#analyzing-an-illumina-dataset)
-  * [Step 1 — Demultiplexing and quality control](#step-1--demultiplexing-and-quality-control)
-  * [Step 2 — OTU clustering and taxonomic assignment](#step-2--otu-clustering-and-taxonomic-assignment)
-  * [Step 3 — Running LULU for OTU table curation](#step-3--running-lulu-for-otu-table-curation)
+  * [Step 1: Demultiplexing and quality control](#step-1:-demultiplexing-and-quality-control)
+  * [Step 2: OTU clustering and taxonomic assignment](#step-2:-otu-clustering-and-taxonomic-assignment)
+  * [Step 3: Running LULU for OTU table curation](#step-3:-running-lulu-for-otu-table-curation)
 
 * [Analyzing a PacBio dataset](#analyzing-a-pacbio-dataset)
-  * [Step 1 — Quality control and artefact removal](#step-1--quality-control-and-artefact-removal)
-  * [Step 2 — OTU clustering](#step-2--otu-clustering-1)
-  * [Step 3 — Taxonomic assignation](#step-3--taxonomic-assignation)
+  * [Step 1: Quality control and artefact removal](#step-1:-quality-control-and-artefact-removal)
+  * [Step 2: OTU clustering](#step-2:-otu-clustering-1)
+  * [Step 3: Taxonomic assignation](#step-3:-taxonomic-assignation)
 
 
 
