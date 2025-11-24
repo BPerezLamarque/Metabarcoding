@@ -32,12 +32,17 @@ The development of these pipelines was supported by funding from the MITI DEFIS 
 
 This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/00_prepare_database.sh) prepares a reference database for taxonomic assignment by trimming primer sequences from the input FASTA file using **Cutadapt**.
 
+
+
 **Requirements:**
 * **Software:** Cutadapt ≥ 5.0
 * **Inputs:**
-  * Raw database FASTA file (compressed or uncompressed)
-  * Forward primer sequence
-  * Reverse primer sequence
+  * **-i**: Raw database FASTA file (compressed or uncompressed)
+  * **-f**: Forward primer sequence
+  * **-r**: Reverse primer sequence
+  * **-x**: Whether detecting and trimming the forward primer is mandatory to keep the sequence (`true` or `false`)
+  * **-y**: Whether detecting and trimming the reverse primer is mandatory to keep the sequence (`true` or `false`)
+  * **-l**: Minimum sequence length required to retain the entry in the database
 
 ### Running the script:
 
@@ -54,9 +59,13 @@ bash cut_database.sh \
     -n "$NAME_DB" \
     -x false \
     -y false \
-    -l 100 \
-    -t "sintax"
+    -l 100
 ```
+
+---
+
+If you want, I can automatically harmonize all requirement sections across Steps 0, 1, 2, and PacBio to ensure identical structure.
+
 
 
 

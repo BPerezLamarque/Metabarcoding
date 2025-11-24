@@ -9,7 +9,7 @@ while getopts "hi:o:f:r:n:x:y:l:" option
 do
         case $option in
                 h)
-                    echo "Usage: $0 -i <input_file> -f <forward_primer> -r <reverse_primer> -o <output_directory> -n -x -y -l -t <type>"
+                    echo "Usage: $0 -i <input_file> -f <forward_primer> -r <reverse_primer> -o <output_directory> -n -x -y -l"
                     echo "  -i  Input raw database file (FASTA format, can be compressed)"
                     echo "  -f  Forward primer sequence"
                     echo "  -r  Reverse primer sequence"
@@ -18,8 +18,7 @@ do
                     echo "  -x  indicates whether finding (and extracting) the forward primer is mandatory for keeping the sequence (true or false)"
                     echo "  -y  indicates whether finding (and extracting) the reverse primer is mandatory for keeping the sequence (true or false)"
                     echo "  -l  minimum length of the retained sequences"
-		    echo "  -t  Database type: 'usearch' or 'sintax' (default: 'usearch')"
-		    exit 0
+		    		exit 0
                     ;;
                 i)
                     INPUT="$OPTARG"
@@ -133,12 +132,9 @@ else
     CUTADAPT="cutadapt --minimum-length ${MIN_LENGTH} --no-indels -e ${ERROR_RATE}"
 fi
 
-if  [ "$DB_TYPE" = "usearch" ]; then
-	${command} "${OUTPUT}" | sed '/^>/ ! s/U/T/g' | \
-		${CUTADAPT} -a "${ANTI_PRIMER_R}" -O "${MIN_R}" - 2> "${LOG_R}" | \
-		sed '/^>/ s/;/|/g ; /^>/ s/ /_/g' > "${OUTPUT_R}"
-else
-	${command} "${OUTPUT}" | sed '/^>/ ! s/U/T/g' | \
-     	${CUTADAPT} -a "${ANTI_PRIMER_R}" -O "${MIN_R}" - 2> "${LOG_R}" | \
-		sed '/^>/ s/|/;/g ; /^>/ s/ /_/g' > "${OUTPUT_R}"
+
+${command} "${OUTPUT}" | sed '/^>/ ! s/U/T/g' | \
+	${CUTADAPT} -a "${ANTI_PRIMER_R}" -O "${MIN_R}" - 2> "${LOG_R}" | \
+	sed '/^>/ s/|/;/g ; /^>/ s/ /_/g' > "${OUTPUT_R}"
+
 rm $OUTPUT
