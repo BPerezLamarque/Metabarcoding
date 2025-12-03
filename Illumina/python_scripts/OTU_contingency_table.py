@@ -108,12 +108,12 @@ def stampa_parse():
     """
     separator = "\t"
     stampa_file = sys.argv[5]
-    method = sys.argv[6]  # "usearch" or "sintax"
+    method = sys.argv[6]  # "vsearch" or "sintax"
 
     stampa = dict()
     with open(stampa_file, "r") as f:
         for line in f:
-            if method == "usearch" :
+            if method == "vsearch" :
                 amplicon, identity, taxonomy = line.strip().split("\t")
                 amplicon, abundance = amplicon.split(";size=")
                 identity = float(identity) / 100
@@ -162,7 +162,7 @@ def print_table(representatives, stats, sorted_stats,
     Export results.
     """
     # Print table header
-    if method == "usearch":
+    if method == "vsearch":
         print("OTU", "abundance",
           "amplicon", "length",
           "chimera", "spread",
@@ -197,17 +197,17 @@ def print_table(representatives, stats, sorted_stats,
 
         if seed in stampa:
             data = stampa[seed]
-            if method == "usearch":
+            if method == "vsearch":
                 identity, taxonomy = data
             else :
                 tax_prob, taxonomy = data
         else:
-            if method == "usearch":
+            if method == "vsearch":
                 identity, taxonomy = "NA", "NA"
             else :
                 tax_prob, taxonomy = "NA", "NA"
 
-        if method == "usearch":
+        if method == "vsearch":
             print(i, abundance,
               seed, len(sequence),
               chimera_status, spread,
