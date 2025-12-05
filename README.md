@@ -120,7 +120,7 @@ bash 01_demultiplexing_QC.sh \
 
 ## Step 2: OTU clustering and taxonomic assignment:
 
-This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/02_OTU_clustering.sh) performs OTU clustering using **VSEARCH** and generates a OTU table. Depending on the selected options, it can also run **UNOISE denoising**, **swarm clustering**, and **taxonomic assignment** using **SINTAX** or **VSEARCH**.
+This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/02_OTU_clustering.sh) performs OTU clustering using **VSEARCH** and generates a OTU table. Depending on the selected options, it can also run **UNOISE denoising**, **swarm clustering**, and **taxonomic assignment** using **VSEARCH** or **SINTAX**  (NB: SINTAX requires a specific formating of the taxonomic ranks, following the taxonomy in UNITE).
 
 **Required software:**
 * VSEARCH ≥ 2.29.3
@@ -140,7 +140,7 @@ This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/02
 -u  Perform a denoising step with UNOISE before clustering (default: true)
 -v  Clustering method: "vsearch" or "swarm" (default: "vsearch")
 -c  Identity percentage for clustering (default: 0.97)
--m  Method for taxonomic assignment: "sintax" or "vsearch" (default: "vsearch")
+-m  Method for taxonomic assignment: "vsearch" or "sintax" (default: "vsearch")
 -d  Path to the database for taxonomic assignment
 -p  SINTAX probability cutoff (default: 0.5)
 -n  Number of CPU cores to use (default: 1)

@@ -274,7 +274,7 @@ else
     			--db $path_to_db \
     			--id 0.7 \
     			--iddef 2 \
-    			--userout $OUTPUT_DIR/taxonomy_OTU_uvearch.txt
+    			--userout $OUTPUT_DIR/taxonomy_OTU_vsearch.txt
 
 	elif [ "$METHOD" = "sintax" ]; then
 		echo "Running sintax assignation with vsearch on: $OUTPUT_DIR/reads_OTU_nonchimeras.fasta"
