@@ -15,8 +15,6 @@ do
                     echo "  -i  Input directory containing fastq files (can be compressed; can be a part of the files names, e.g. '../raw_reads/ITS*.fastq')"
                     echo "  -o  Output directory (default: ./01_OTU_PRECLUSTERING)"
                     echo "  -m  Mapping file (tab-separated) with the following columns: SampleID, barcodeFw, primerFw, primerRev, barcodeRev"
-		    		echo "  -f	The primer forward sequence "
-		    		echo"   -r	The primer reverse sequence "
                     echo "  -h  Show this help message"
                     exit 0
                     ;;
@@ -35,15 +33,12 @@ done
 
 if [ -z "$OUTPUT_DIR" ]; then
     OUTPUT_DIR="$(pwd)/01_OTU_PRECLUSTERING"
-    mkdir -p "$OUTPUT_DIR"
 fi
 
 
-# Reverse complement the reverse primer
-ANTI_PRIMER_R=$( echo "${PRIMER_R}" | tr ACGTacgtYyMmRrKkBbVvDdHh TGCAtgcaRrKkYyMmVvBbHhDd | rev )
-
-
 # Prepare the data
+echo "Prepare the data"
+
 mkdir -p $OUTPUT_DIR
 
 # List all samples, remove the extension, and store the names
@@ -52,10 +47,12 @@ ls $INPUT_FILES | sed 's#.*/##' | sed 's/.f.*//' | sed 's/_R[12].*//' | sort -u 
 # Check the quality encoding (33 or 64?)
 OUTPUT="$OUTPUT_DIR/Quality.encoding.log"
 FIRST_SAMPLE=$(head -n 1 $OUTPUT_DIR/list_sample.txt)
-INPUT_SAMPLE=$(ls $INPUT_FILES | grep -E "^${FIRST_SAMPLE}_R1\.(fastq\.gz|fastq)$" | sed "s|^|$INPUT_FILES/|")
+INPUT_SAMPLE=$(ls $INPUT_FILES | grep -E "${FIRST_SAMPLE}_R1\.(fastq\.gz|fastq)$")
 
 if file "$INPUT_SAMPLE" | grep -q "compressed"; then
     zcat "$INPUT_SAMPLE" > $OUTPUT_DIR/temp_decompressed.fastq
+else
+    cat "$INPUT_SAMPLE" > $OUTPUT_DIR/temp_decompressed.fastq
 fi
 vsearch \
     --threads 0 \
@@ -64,14 +61,15 @@ QUALITY_ENCODING=$(grep "Guess: Original" $OUTPUT | awk -F'[+]' '{print $2}' | a
 
 
 # Merge the paired-end reads
+echo "Merge the paired-end reads"
 
 mkdir -p $OUTPUT_DIR/merged_reads/
 
 for sample in $(cat $OUTPUT_DIR/list_sample.txt); do
     
-    INPUT_R1=$(ls $INPUT_FILES | grep -E "^${sample}_R1\.(fastq\.gz|fastq)$" | sed "s|^|$INPUT_FILES/|")
-    INPUT_R2=$(ls $INPUT_FILES | grep -E "^${sample}_R2\.(fastq\.gz|fastq)$" | sed "s|^|$INPUT_FILES/|")
-    
+    INPUT_R1=$(ls $INPUT_FILES | grep -E "${sample}_R1\.(fastq\.gz|fastq)$")
+    INPUT_R2=$(ls $INPUT_FILES | grep -E "${sample}_R2\.(fastq\.gz|fastq)$")
+
     OUTPUT="$OUTPUT_DIR/merged_reads/"$sample".fastq"
 
     vsearch \
@@ -86,6 +84,7 @@ done
 
 
 # Checking the quality with FASTQC
+echo "Checking the quality with FASTQC"
 
 # FastQC is available on https://www.bioinformatics.babraham.ac.uk/projects/download.html#fastqc (https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.7.zip)
 
@@ -100,6 +99,8 @@ for sample in $(cat $OUTPUT_DIR/list_sample.txt); do
 done
 
 # Quality filtering
+echo "Quality filtering"
+
 for sample in $(cat $OUTPUT_DIR/list_sample.txt); do
 
     echo $sample
@@ -140,6 +141,8 @@ if [ -z "$MAPPING" ]; then
 fi
 
 # Demultiplexing
+echo "Demultiplexing"
+
 # Get the column index of the barcode and primer columns
 
 barcodeFwColumnIdx="$(( $(head -n 1 $MAPPING | tr '\t' '\n' | grep -nx 'barcodeFw' | cut -d: -f1) -1 ))" # getting the index of column with forward barcode etc. "-1" is applied as array below counts from 0

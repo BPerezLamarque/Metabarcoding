@@ -51,7 +51,7 @@ INPUT="SINTAX_EUK_ITS_v1.9.4.fasta"
 PATH_DIR_DB="Path_to/database/"
 NAME_DB="General_EUK_ITS_v1.9.4_Ted"
 
-bash cut_database.sh \
+bash 00_prepare_database.sh \
     -i "$INPUT" \
     -f GGAAGTAAAAGTCGTAACAAGG \
     -r CAAGAGATCCGTTGTTGAAAGTK \

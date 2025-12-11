@@ -44,9 +44,6 @@ do
                 l)
                     MIN_LENGTH="$OPTARG"
                     ;;
-		t)
-		    DB_TYPE="$OPTARG" 
-		    ;;
         esac
 done
 
@@ -54,13 +51,6 @@ done
 if [ -z "$INPUT" ]; then
     echo "Error: An input file must be specified."
     exit 1
-fi
-
-if (file $INPUT | grep -q "compressed data");
-then
-    command="zcat"
-else
-    command="cat"
 fi
 
 if [ -z "$NAME" ]; then
@@ -83,12 +73,20 @@ if [ -z "$DIR" ]; then
     DIR="$(pwd)"
 fi
 
-if [ -t "$DB_TYPE" ]; then
-    DB_TYPE="usearch"
-fi
 
 mkdir -p "$DIR"
 cd $DIR
+
+
+command="cat"
+if (file $INPUT | grep -q "compressed data");
+then
+    command="zcat"  
+fi
+if (file $INPUT | grep -q "Zip");
+then
+    command="unzip"
+fi
 
 
 # Define variables and output files primers
@@ -115,12 +113,7 @@ else
     CUTADAPT="cutadapt --minimum-length ${MIN_LENGTH} --no-indels -e ${ERROR_RATE}"
 fi
 
-if  [ "$DB_TYPE" = "usearch" ]; then
-	${command} "${INPUT}" | sed '/^>/ ! s/U/T/g' | \
-		${CUTADAPT} -g "${PRIMER_F}" -O "${MIN_F}" - 2> "${LOG}" | \
-		sed '/^>/ s/;/|/g ; /^>/ s/ /_/g' > "${OUTPUT}"
-else
-	${command} "${INPUT}" | sed '/^>/ ! s/U/T/g' | \
+${command} "${INPUT}" | sed '/^>/ ! s/U/T/g' | \
         ${CUTADAPT} -g "${PRIMER_F}" -O "${MIN_F}" - 2> "${LOG}" | \
 		sed '/^>/ s/|/;/g ; /^>/ s/ /_/g' > "${OUTPUT}"
 
