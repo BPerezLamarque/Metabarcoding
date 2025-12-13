@@ -16,6 +16,8 @@ do
                     echo "  -o  Output directory (default: ./01_OTU_PRECLUSTERING)"
                     echo "  -m  Mapping file (tab-separated) with the following columns: SampleID, barcodeFw, primerFw, primerRev, barcodeRev"
                     echo "  -h  Show this help message"
+                    echo "  -l  minimum length of the retained sequences"
+                    echo "  -n  number of cores"
                     exit 0
                     ;;
                 o)
@@ -27,6 +29,12 @@ do
                 m)
                     MAPPING="$OPTARG"
 		    		;;
+		    	l)
+                    MIN_LENGTH="$OPTARG"
+                    ;;
+                n)
+                    NB_CORES="$OPTARG"
+                    ;;
         esac
 done
 
@@ -35,6 +43,13 @@ if [ -z "$OUTPUT_DIR" ]; then
     OUTPUT_DIR="$(pwd)/01_OTU_PRECLUSTERING"
 fi
 
+if [ -z "$MIN_LENGTH" ]; then
+    MIN_LENGTH=80
+fi
+
+if [ -z "$NB_CORES" ]; then
+    NB_CORES=1
+fi
 
 # Prepare the data
 echo "Prepare the data"
@@ -55,7 +70,7 @@ else
     cat "$INPUT_SAMPLE" > $OUTPUT_DIR/temp_decompressed.fastq
 fi
 vsearch \
-    --threads 0 \
+    --threads $NB_CORES \
     --fastq_chars $OUTPUT_DIR/temp_decompressed.fastq 2> ${OUTPUT}
 QUALITY_ENCODING=$(grep "Guess: Original" $OUTPUT | awk -F'[+]' '{print $2}' | awk -F')' '{print $1}')
 
@@ -113,6 +128,11 @@ for sample in $(cat $OUTPUT_DIR/list_sample.txt); do
     --fastq_maxns 0 \
     --fastq_maxee 2 \
     --fastaout "${OUTPUT}"
+    
+    echo "number of reads in $sample before quality filtering:" > "$OUTPUT_DIR/merged_reads/"$sample"_QF.log" 
+    cat $INPUT | wc -l | awk '{print int($1/4)}' >> "$OUTPUT_DIR/merged_reads/"$sample"_QF.log" 
+    echo "number of reads in $sample after quality filtering:" >> "$OUTPUT_DIR/merged_reads/"$sample"_QF.log" 
+    grep ">" "${OUTPUT}" | wc -l >> "$OUTPUT_DIR/merged_reads/"$sample"_QF.log" 
 
 done
 
@@ -128,7 +148,7 @@ if [ -z "$MAPPING" ]; then
 
      # Dereplicate at the sample level
     vsearch --quiet \
-        --threads 0 \
+        --threads $NB_CORES \
         --derep_fulllength "temp_"$sample".fasta" \
         --sizein \
         --sizeout \
@@ -153,7 +173,7 @@ primerRevColumnsIdx="$(( $(head -n 1 $MAPPING | tr '\t' '\n' | grep -nx 'primerR
 # Create the output directory 
 mkdir -p "$OUTPUT_DIR/Demultiplexed_data/"
 mkdir -p "$OUTPUT_DIR/tmp_demux"
-MIN_LENGTH=150
+
 
 INPUT=$(find "$OUTPUT_DIR/merged_reads/" -type f -name "*.fasta" ! -name "*_RC.fasta" | head -n 1)
 INPUT_REVCOMP="${INPUT/.fasta/_RC.fasta}"
@@ -161,7 +181,7 @@ INPUT_REVCOMP="${INPUT/.fasta/_RC.fasta}"
 
 # Reverse complement fastq file
 vsearch --quiet \
-    --threads 0 \
+    --threads $NB_CORES \
     --fastx_revcomp "${INPUT}" \
     --fastaout "${INPUT_REVCOMP}"
 
@@ -207,7 +227,7 @@ while read -r line; do
 
         # Dereplicate at the study level
         vsearch --quiet \
-            --threads 0 \
+            --threads $NB_CORES \
             --derep_fulllength "$OUTPUT_DIR/tmp_demux/temp_${SAMPLE_NAME}.fasta" \
             --sizein \
             --sizeout \
@@ -221,4 +241,7 @@ done < "${MAPPING}"
 # Note: the option sha1 (encoding system) is giving the same names to the identical amplicons across samples
 
 # Remove the files that are no longer useful
-rm -f "${INPUT}" "${INPUT_REVCOMP}" "temp.fastq" "temp.fasta"
+rm -f "${INPUT}" "${INPUT_REVCOMP}" "temp.fastq" "temp.fasta" "${OUTPUT_DIR}/temp_decompressed.fastq" 
+rm -rf "${OUTPUT_DIR}/tmp_demux/"
+rm -f "${OUTPUT_DIR}/merged_reads/*fastq"
+rm -f "${OUTPUT_DIR}/merged_reads/*fasta"

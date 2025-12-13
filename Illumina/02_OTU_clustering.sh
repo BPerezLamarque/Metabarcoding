@@ -8,7 +8,7 @@
 # It also requires the following parameters: path to the directory containing input fasta files, path to the database, path to the scripts, output directory, abundance threshold, and identity percentage.
 
 
-nb_cores=1
+NB_CORES=1
 OUTPUT_DIR=OTU_CLUSTERING
 path_scripts=$(pwd)/python_scripts/
 UNOISE="true"
@@ -71,7 +71,7 @@ do
 		    		TAGJUMP="$OPTARG"
 		    		;;
 		    	n)
-		    		nb_cores="$OPTARG"
+		    		NB_CORES="$OPTARG"
 		    		;;
         esac
 done
@@ -112,8 +112,8 @@ else
     		--output $OUTPUT_DIR/reads_amplicon_derep.fasta
 fi
 
-###TAG-JUMP REMOVAL
-#NEED dereplication.parquet and SeqTab.txt with sampleID seqID abundance
+### TAG-JUMP REMOVAL
+# NEED dereplication.parquet and SeqTab.txt with sampleID seqID abundance
 
 if [ "$TAGJUMP" = "true" ]; then
 	if [ "$RESUME" = "true" ] && [ -s "$OUTPUT_DIR/Seq_tab_TagJumpFiltered.fasta" ]; then
@@ -176,7 +176,7 @@ if [ "$UNOISE" = "true" ]; then
       			--qmask   dust \
       			--gapopen  20I/2E \
       			--gapext   2I/1E \
-      			--threads 8 \
+      			--threads $NB_CORES \
       			--fasta_width 0 \
       			--sizein --sizeout \
       			--centroids $OUTPUT_DIR/reads_amplicon_UNOISE.fa \
@@ -203,7 +203,7 @@ if [ "$CLUSTER" = "vsearch" ];then
 	else
 		echo "Running vsearch clusterisation on: $OUTPUT_DIR/reads_amplicon_sorted.fasta"
 		vsearch -cluster_size  $OUTPUT_DIR/reads_amplicon_sorted.fasta \
-			--threads $nb_cores \
+			--threads $NB_CORES \
     			--id $IDENTITY_PERCENTAGE --centroids $OUTPUT_DIR/reads_OTU97.fasta \
     			--uc $OUTPUT_DIR/clusters_OTU97.uc \
     			--sizein --sizeout
@@ -230,7 +230,7 @@ elif [ "$CLUSTER" = "swarm" ];then
 			--differences 1 \
     			--fastidious \
     			--usearch-abundance \
-    			--threads 8 \
+    			--threads $NB_CORES \
     			--statistics-file $OUTPUT_DIR/SWARM.stats \
     			--internal-structure $OUTPUT_DIR/SWARM.struct \
     			--uclust-file $OUTPUT_DIR/SWARM.uc \
@@ -263,7 +263,7 @@ else
 	if [ "$METHOD" = "vsearch" ]; then
 		echo "Running vsearch assignation with vsearch on: $OUTPUT_DIR/reads_OTU_nonchimeras.fasta"
 		vsearch --usearch_global $OUTPUT_DIR/reads_OTU_nonchimeras.fasta \
-    			--threads $nb_cores \
+    			--threads $NB_CORES \
     			--dbmask none \
     			--qmask none \
     			--rowlen 0 \
@@ -283,7 +283,7 @@ else
         		--sintax_cutoff $CUTOFF_PROB \
         		--tabbedout  $OUTPUT_DIR/taxonomy_OTU_sintax.txt    \
         		--strand plus    \
-        		--threads $nb_cores
+        		--threads $NB_CORES
 	fi
 fi
 

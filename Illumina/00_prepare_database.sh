@@ -66,7 +66,7 @@ if [ -z "$OBLIGATE_R" ]; then
 fi
 
 if [ -z "$MIN_LENGTH" ]; then
-    MIN_LENGTH=100
+    MIN_LENGTH=80
 fi
 
 if [ -z "$DIR" ]; then

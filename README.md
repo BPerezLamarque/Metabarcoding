@@ -84,6 +84,7 @@ This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/01
 **Required inputs:**
 * Path to the directory containing the raw FASTQ files
 * A mapping file for demultiplexing (optional)
+* A minimum sequence length required to keep the sequences during demultiplexing (**-l**)
 
 If demultiplexing is needed, the mapping file (`mapping_file.txt`) must contain the following columns:
 * `SampleID`
@@ -111,7 +112,8 @@ INPUT_FILES="path/to/directory/*.fastq"  # Corresponds to the Illumina R1 and R2
 bash 01_demultiplexing_QC.sh \
     -i "$INPUT_FILES" \
     -o ./01_OTU_PRECLUSTERING \
-    -m mapping_file.txt
+    -m mapping_file.txt \
+    -l 80
 ```
 
 
