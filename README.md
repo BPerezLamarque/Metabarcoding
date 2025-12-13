@@ -47,9 +47,10 @@ This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/00
 ### Running the script:
 
 ```bash
-INPUT="SINTAX_EUK_ITS_v1.9.4.fasta"
+INPUT="General_EUK_ITS_v2.0.fasta"  # Downloaded from EUKARYOME (https://eukaryome.org/generalfasta/)
+NAME_DB="EUK_ITS1_fung02"
 PATH_DIR_DB="Path_to/database/"
-NAME_DB="General_EUK_ITS_v1.9.4_Ted"
+
 
 bash 00_prepare_database.sh \
     -i "$INPUT" \
@@ -141,29 +142,32 @@ This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/02
 -s  Path to the Python scripts
 -u  Perform a denoising step with UNOISE before clustering (default: true)
 -v  Clustering method: "vsearch" or "swarm" (default: "vsearch")
--c  Identity percentage for clustering (default: 0.97)
+-c  Identity percentage for clustering with "vsearch" (default: 0.97)
 -m  Method for taxonomic assignment: "vsearch" or "sintax" (default: "vsearch")
 -d  Path to the database for taxonomic assignment
 -p  SINTAX probability cutoff (default: 0.5)
+-t  Perform a TagJump filtration (default = true)
+-x  Minimum number of reads of an OTU to perform taxonomic assignment
 -n  Number of CPU cores to use (default: 1)
 ```
+
 
 ### Run the script:
 
 Example of script using VSEARCH OTU clustering at 97% identity, with UNOISE denoising, and SINTAX taxonomic assignment (probability cutoff = 0.5):
 
 ```bash
-OUT_DIR="02_OTU_CLUSTERING_VSEARCH_sintax"
+OUT_DIR="02_OTU_CLUSTERING_OTU97_VSEARCH"
 
-bash 02_OTU_clustering \
+bash 02_OTU_clustering.sh \
     -i 01_OTU_PRECLUSTERING/Demultiplexed_data/ \
     -s Path_to/python_scripts/ \
     -u "true" \
     -v "vsearch" \
     -c 0.97 \
-    -m "sintax" \
+    -m "vsearch" \
     -d "$PATH_DIR_DB/$NAME_DB" \
-    -p 0.5 \
+    -x 2 \
     -n 1 \
     -o "$OUT_DIR"
 ```

@@ -7,7 +7,7 @@
 
 
 
-while getopts "o:i:d:m:f:r:" option
+while getopts "hi:o:m:l:n:" option
 do
         case $option in
                 h)
@@ -17,7 +17,7 @@ do
                     echo "  -m  Mapping file (tab-separated) with the following columns: SampleID, barcodeFw, primerFw, primerRev, barcodeRev"
                     echo "  -h  Show this help message"
                     echo "  -l  minimum length of the retained sequences"
-                    echo "  -n  number of cores"
+                    echo "  -n  Number of CPU cores to use (default = 1)"
                     exit 0
                     ;;
                 o)
@@ -243,5 +243,5 @@ done < "${MAPPING}"
 # Remove the files that are no longer useful
 rm -f "${INPUT}" "${INPUT_REVCOMP}" "temp.fastq" "temp.fasta" "${OUTPUT_DIR}/temp_decompressed.fastq" 
 rm -rf "${OUTPUT_DIR}/tmp_demux/"
-rm -f "${OUTPUT_DIR}/merged_reads/*fastq"
-rm -f "${OUTPUT_DIR}/merged_reads/*fasta"
+rm -f "${OUTPUT_DIR}/merged_reads/"*"fastq"
+rm -f "${OUTPUT_DIR}/merged_reads/"*"fasta"
