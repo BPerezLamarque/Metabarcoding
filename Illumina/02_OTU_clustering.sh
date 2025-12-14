@@ -9,7 +9,7 @@
 
 
 NB_CORES=1
-path_scripts=$(pwd)"/python_scripts/"
+PATH_PYTHON=$(pwd)"/python_scripts/"
 UNOISE="true"
 CLUSTER="vsearch"
 IDENTITY_PERCENTAGE=0.97
@@ -46,6 +46,9 @@ do
                     ;;
                 d)
                     path_to_db="$OPTARG"
+                    ;;
+                s)
+                    PATH_PYTHON="$OPTARG"
                     ;;
                 o)
                     OUTPUT_DIR="$OPTARG"
@@ -96,11 +99,11 @@ fi
 
 mkdir -p $OUTPUT_DIR
 
-#STEP 2: OTU Clustering
 
+### DEREPLICATION
 
 if [ "$RESUME" = "true" ] && [ -s "$OUTPUT_DIR/reads_amplicon_derep.fasta" ] && [ -s "$OUTPUT_DIR/reads_amplicon_derep.uc" ]; then
-        echo "Output file already exists, skipping this step."
+        echo "Output file already exists, skipping this step of dereplication."
 else
 	echo "Running Dereplication by vsearch on: $OUTPUT_DIR/reads_amplicon.fasta"
 	cat $INPUT_DIR/*.f* > $OUTPUT_DIR/reads_amplicon.fasta
@@ -119,8 +122,9 @@ fi
 
 if [ "$TAGJUMP" = "true" ]; then
 	if [ "$RESUME" = "true" ] && [ -s "$OUTPUT_DIR/Seq_tab_TagJumpFiltered.fasta" ]; then
-                echo "Output file already exists, skipping this step."
+                echo "Output file already exists, skipping this step of TagJump removal."
 	else
+		echo "Running the step of TagJump removal."
 		for f in "$INPUT_DIR"/*.f*; do
 		SAMPLE=$(basename "$f" | sed -E 's/(\.[^.]+)+$//')
 		cat "$f" \
@@ -139,7 +143,7 @@ if [ "$TAGJUMP" = "true" ]; then
 		sed -E 's/;size=[0-9]+//g; s/;//g' $OUTPUT_DIR/reads_amplicon_derep.tsv |sort > $OUTPUT_DIR/reads_amplicon_derep_filtered.tsv
 		mv $OUTPUT_DIR/reads_amplicon_derep_filtered.tsv $OUTPUT_DIR/reads_amplicon_derep.tsv
 
-		Rscript $path_scripts/tag_jump_removal_longtab.R \
+		Rscript $PATH_PYTHON/tag_jump_removal_longtab.R \
     			--seqtab $OUTPUT_DIR/Seq_tab_not_filtered.txt \
     			--uc $OUTPUT_DIR/reads_amplicon_derep.tsv \
     			--uncross_f 0.01 \
@@ -158,7 +162,6 @@ if [ "$TAGJUMP" = "true" ]; then
   			--relabel_sha1 \
   			--output $OUTPUT_DIR/Seq_tab_TagJumpFiltered_derep.fasta \
   			--uc $OUTPUT_DIR/Seq_tab_TagJumpFiltered_derep.uc
-		#mv $OUTPUT_DIR/Seq_TagJumpFiltered_derep.fasta $OUTPUT_DIR/reads_amplicon_derep.fasta # test 13/12/25
 		mv $OUTPUT_DIR/Seq_tab_TagJumpFiltered_derep.fasta $OUTPUT_DIR/reads_amplicon_derep.fasta
 	fi
 else
@@ -166,9 +169,11 @@ else
 fi
 
 
+### DENOISING
+
 if [ "$UNOISE" = "true" ]; then
 	if [ "$RESUME" = "true" ] && [ -s "$OUTPUT_DIR/UNOISE.uc" ]; then
-		echo "Output file already exists, skipping this step."
+		echo "Output file already exists, skipping this step of denoising."
 	else
 		echo "Running UNOISE by vsearch on: $OUTPUT_DIR/reads_amplicon_derep.fasta"
 		vsearch \
@@ -182,47 +187,63 @@ if [ "$UNOISE" = "true" ]; then
       			--threads $NB_CORES \
       			--fasta_width 0 \
       			--sizein --sizeout \
-      			--centroids $OUTPUT_DIR/reads_amplicon_UNOISE.fa \
+      			--centroids $OUTPUT_DIR/reads_amplicon_derep_clean.fasta \
       			--uc $OUTPUT_DIR/UNOISE.uc
-	mv $OUTPUT_DIR/reads_amplicon_UNOISE.fa $OUTPUT_DIR/reads_amplicon_derep.fasta
+      	
+      	grep -v "^C" $OUTPUT_DIR/UNOISE.uc > $OUTPUT_DIR/UNOISE_hits.uc
+
 	fi
 else
 	echo "Skipping the unoise step."
+	cp $OUTPUT_DIR/reads_amplicon_derep.fasta $OUTPUT_DIR/reads_amplicon_derep_clean.fasta
 fi
 
+
+### SORT BY SIZE 
 
 if [ "$RESUME" = "true" ] && [ -s "$OUTPUT_DIR/reads_amplicon_sorted.fasta" ]; then
-	echo "Output file already exists, skipping this step."
+	echo "Output file already exists, skipping this step of sorting by size."
 else
-	echo "Running sortbysize by vsearch on: $OUTPUT_DIR/reads_amplicon_derep.fasta"
-	vsearch -sortbysize $OUTPUT_DIR/reads_amplicon_derep.fasta -output $OUTPUT_DIR/reads_amplicon_sorted.fasta -minsize 1
+	echo "Running sortbysize by vsearch on: $OUTPUT_DIR/reads_amplicon_derep_clean.fasta"
+	vsearch -sortbysize $OUTPUT_DIR/reads_amplicon_derep_clean.fasta -output $OUTPUT_DIR/reads_amplicon_sorted.fasta -minsize 1
 	
-	rm $OUTPUT_DIR/reads_amplicon_derep.fasta
 fi
 
+### CLUSTERING
+
 if [ "$CLUSTER" = "vsearch" ];then
-	if [ "$RESUME" = "true" ] && [ -s "$OUTPUT_DIR/reads_OTU97_final.fasta" ] &&  [ -s "$OUTPUT_DIR/clusters_OTU97.uc" ] && [ -s "$OUTPUT_DIR/reads_mapped_OTU97.txt" ] &&  [ -s "$OUTPUT_DIR/stats_file_OTU97.txt" ]; then
-		echo "Output file already exists, skipping this step."
+	if [ "$RESUME" = "true" ] && [ -s "$OUTPUT_DIR/reads_OTU_final.fasta" ] &&  [ -s "$OUTPUT_DIR/clusters_OTU.uc" ] && [ -s "$OUTPUT_DIR/reads_mapped_OTU.txt" ] &&  [ -s "$OUTPUT_DIR/stats_file_OTU.txt" ]; then
+		echo "Output file already exists, skipping this step of clustering."
 	else
 		echo "Running vsearch clusterisation on: $OUTPUT_DIR/reads_amplicon_sorted.fasta"
 		vsearch -cluster_size  $OUTPUT_DIR/reads_amplicon_sorted.fasta \
 				--threads $NB_CORES \
     			--id $IDENTITY_PERCENTAGE \
-    			--centroids $OUTPUT_DIR/reads_OTU97.fasta \
-    			--uc $OUTPUT_DIR/clusters_OTU97.uc \
+    			--centroids $OUTPUT_DIR/reads_OTU.fasta \
+    			--uc $OUTPUT_DIR/clusters_OTU.uc \
     			--sizein \
     			--sizeout
 	
 		vsearch --fasta_width 0 \
-				--sortbysize $OUTPUT_DIR/reads_OTU97.fasta \
-				--output $OUTPUT_DIR/reads_OTU97_final.fasta
+				--sortbysize $OUTPUT_DIR/reads_OTU.fasta \
+				--output $OUTPUT_DIR/reads_OTU_final.fasta
+				
+				
+		# Merge the two UC files (map all original reads to OTU clusters)
+		if [ "$UNOISE" = "true" ];then
+			#python3 $PATH_PYTHON/chain_uc.py $OUTPUT_DIR/UNOISE.uc $OUTPUT_DIR/clusters_OTU.uc $OUTPUT_DIR/clusters_OTU_full.uc
+			python3 $PATH_PYTHON/chain_uc.py $OUTPUT_DIR/UNOISE_hits.uc $OUTPUT_DIR/clusters_OTU.uc $OUTPUT_DIR/clusters_OTU_full.uc
+		else
+			cat $OUTPUT_DIR/clusters_OTU.uc > $OUTPUT_DIR/clusters_OTU_full.uc
+		fi
 
-		python3 $path_scripts/map2qiime.py $OUTPUT_DIR/clusters_OTU97.uc > $OUTPUT_DIR/reads_mapped_OTU97.txt
-		python3 $path_scripts/make_stats.py $OUTPUT_DIR/reads_OTU97_final.fasta > $OUTPUT_DIR/stats_file_OTU97.txt
+
+		python3 $PATH_PYTHON/map2qiime.py $OUTPUT_DIR/clusters_OTU_full.uc > $OUTPUT_DIR/reads_mapped_OTU.txt
+		python3 $PATH_PYTHON/make_stats.py $OUTPUT_DIR/reads_OTU_final.fasta > $OUTPUT_DIR/stats_file_OTU.txt
 	fi
 elif [ "$CLUSTER" = "swarm" ];then
 	if [ "$RESUME" = "true" ] && [ -s "$OUTPUT_DIR/SWARM_representatives.fasta" ] &&  [ -s "$OUTPUT_DIR/SWARM.uc" ] && [ -s "$OUTPUT_DIR/SWARM.struct" ] &&  [ -s "$OUTPUT_DIR/SWARM.stats" ]; then
-                echo "Output file already exists, skipping this step."
+                echo "Output file already exists, skipping this step of clustering."
 	else
 		echo "Running SWARM clusterisation on: $OUTPUT_DIR/reads_amplicon_sorted.fasta"
 		
@@ -249,14 +270,18 @@ elif [ "$CLUSTER" = "swarm" ];then
 	fi
 fi
 
+
 if [ "$CLUSTER" = "vsearch" ];then
-	FINAL_FASTA="$OUTPUT_DIR/reads_OTU97_final.fasta"
+	FINAL_FASTA="$OUTPUT_DIR/reads_OTU_final.fasta"
 elif [ "$CLUSTER" = "swarm" ];then
 	FINAL_FASTA="$OUTPUT_DIR/SWARM_representatives.fasta"
 fi
 
+
+### DE NOVO CHIMERA FILTERING
+
 if [ "$RESUME" = "true" ] && [ -s "$OUTPUT_DIR/reads_OTU.uchime" ] &&  [ -s "$OUTPUT_DIR/reads_OTU_nonchimeras.fasta" ]; then
-	echo "Output file already exists, skipping this step."
+	echo "Output file already exists, skipping this step of de novo chimera filtering."
 else
 	echo "Running de novo chimera detection with vsearch on: $FINAL_FASTA"
 	vsearch --uchime_denovo "$FINAL_FASTA" \
@@ -265,11 +290,12 @@ else
 fi
 
 
+
 # Only perform taxonomic assignation for OTU representing a certain number of reads
 awk -v MIN_READS="$MIN_READS" '
   /^>/ {
     keep = 0
-    if (match($0, /size=([0-9]+)/, a) && a[1] > MIN_READS)
+    if (match($0, /size=([0-9]+)/, a) && a[1] >= MIN_READS)
       keep = 1
   }
   keep
@@ -277,12 +303,12 @@ awk -v MIN_READS="$MIN_READS" '
 > "$OUTPUT_DIR/reads_OTU_nonchimeras_min_reads.fasta"
 
 
-
+### TAXONOMIC ASSIGNATIONS
 
 if [ "$RESUME" = "true" ] && \
-   { [ -s "$OUTPUT_DIR/taxonomy_OTU_vsearch.txt" ] || \
+   { [ -s "$OUTPUT_DIR/taxonomy_OTU_vsearch_sorted.txt" ] || \
      [ -s "$OUTPUT_DIR/taxonomy_OTU_sintax.txt" ]; }; then
-     	echo "Output file already exists, skipping this step."
+     	echo "Output file already exists, skipping this step of taxonomic assignations."
 else
 	if [ "$METHOD" = "vsearch" ]; then
 		echo "Running vsearch assignation with vsearch on: $OUTPUT_DIR/reads_OTU_nonchimeras_min_reads.fasta"
@@ -300,9 +326,6 @@ else
     			--iddef 2 \
     			--userout $OUTPUT_DIR/taxonomy_OTU_vsearch.txt
 
-    # suggestions : --maxaccepts 1 \ --maxrejects 8 \ --id 0.8 # 13/12/25
-
-
 	elif [ "$METHOD" = "sintax" ]; then
 		echo "Running sintax assignation with vsearch on: $OUTPUT_DIR/reads_OTU_nonchimeras_min_reads.fasta"
 		vsearch --sintax $OUTPUT_DIR/reads_OTU_nonchimeras_min_reads.fasta   \
@@ -315,29 +338,42 @@ else
 fi
 
 
+
+### PREPARE THE OTU TABLE 
+
 if [ "$CLUSTER" = "vsearch" ];then
-	STATS="$OUTPUT_DIR/stats_file_OTU97.txt"
-	OTUS="$OUTPUT_DIR/reads_mapped_OTU97.txt"
-	REPRESENTATIVES="$OUTPUT_DIR/reads_OTU97_final.fasta"
+	STATS="$OUTPUT_DIR/stats_file_OTU.txt"
+	OTUS="$OUTPUT_DIR/reads_mapped_OTU.txt"
+	REPRESENTATIVES="$OUTPUT_DIR/reads_OTU_final.fasta"
 	UCHIME="$OUTPUT_DIR/reads_OTU.uchime"
 
 elif [ "$CLUSTER" = "swarm" ];then
 	REPRESENTATIVES="$OUTPUT_DIR/SWARM_representatives.fasta"
-    	STATS="$OUTPUT_DIR/SWARM.stats"
-    	OTUS="$OUTPUT_DIR/SWARM.swarms"
-    	UCHIME="$OUTPUT_DIR/reads_OTU.uchime"
+    STATS="$OUTPUT_DIR/SWARM.stats"
+    OTUS="$OUTPUT_DIR/SWARM.swarms"
+    UCHIME="$OUTPUT_DIR/reads_OTU.uchime"
 fi
 
 if [ "$METHOD" = "sintax" ]; then
 	ASSIGNMENTS="$OUTPUT_DIR/taxonomy_OTU_sintax.txt"
 elif [ "$METHOD" = "vsearch" ]; then
-	cat $OUTPUT_DIR/taxonomy_OTU_vsearch.txt | sort -k2 -n > $OUTPUT_DIR/taxonomy_OTU_vsearch_sorted.txt
+	# Keep one line per OTU
+	awk '{
+		  otu=$1; id=$2
+		  if (!(otu in best) || id>best[otu]) { best[otu]=id; line[otu]=$0 }
+		  if (!(otu in seen_order)) { seen_order[otu]=NR; order[NR]=otu }
+	} END {
+		  for(i=1;i<=NR;i++){ otu=order[i]; if(otu in line){ print line[otu]; delete line[otu] } }
+	}' "$OUTPUT_DIR/taxonomy_OTU_vsearch.txt" > "$OUTPUT_DIR/taxonomy_OTU_vsearch_sorted.txt"
 	ASSIGNMENTS="$OUTPUT_DIR/taxonomy_OTU_vsearch_sorted.txt"
 fi
 
-OTU_TABLE="$OUTPUT_DIR/OTU_table_OTU.txt"
 
-SCRIPT=$path_scripts"/OTU_contingency_table.py" 
+### MAKE THE OTU TABLE 
+
+OTU_TABLE="$OUTPUT_DIR/OTU_table.txt"
+
+SCRIPT=$PATH_PYTHON"/OTU_contingency_table.py" 
 
 python3 \
     "${SCRIPT}" \
@@ -358,5 +394,33 @@ cut -f3,9- "${FILTERED}" > $OUTPUT_DIR/pre_LULU_match.txt
 
 
 # remove the intermediary files: 
-#rm $OUTPUT_DIR/taxonomy_OTU_vsearch_sorted.txt
+
+remove=true
+
+if [ "$remove" = true ]; then
+
+    rm -f "$OUTPUT_DIR"/reads_amplicon*
+    rm -f "$OUTPUT_DIR"/Seq*
+    rm -f "$OUTPUT_DIR/TagJump_scores.rds"
+    rm -f "$OUTPUT_DIR/reads_OTU.uchime"
+    rm -f "$OUTPUT_DIR/reads_OTU_nonchimeras_min_reads.fasta"
+    rm -f "$FINAL_FASTA"
+
+    if [ "$CLUSTER" = "vsearch" ]; then
+        rm -f "$OUTPUT_DIR/UNOISE.uc"
+        rm -f "$OUTPUT_DIR/UNOISE_hits.uc"
+    	rm -f "$OUTPUT_DIR/reads_OTU.fasta"
+        rm -f "$OUTPUT_DIR/clusters_OTU.uc"
+        rm -f "$OUTPUT_DIR/clusters_OTU_full.uc.uc"
+    fi
+
+    if [ "$CLUSTER" = "swarm" ]; then
+        rm -f "$OUTPUT_DIR/SWARM.uc"
+        rm -f "$OUTPUT_DIR/SWARM.struct"
+        rm -f "$OUTPUT_DIR/SWARM.stats"
+        rm -f "$OUTPUT_DIR/SWARM.swarms"
+    fi
+
+    rm -f "$OUTPUT_DIR/taxonomy_OTU_vsearch.txt"
+fi
 

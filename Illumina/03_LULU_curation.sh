@@ -14,22 +14,21 @@
  #--minimum_relative_cooccurence FLOAT relative father-son spread (0.95)
 
 
+NB_CORES=1
 
-
-IDENTITY_PERCENTAGE=0.95
-OUTPUT_DIR=LULU_OTU_CLUSTERING
-
-while getopts "f:s:o:t:c:" option
+while getopts "hf:o:s:t:c:m:n:" option
 do
         case $option in
                 h)
-                    echo "Usage: $0 -f <fasta_file> -o <output_directory> -t <otu_table> -s <simmilarity_cutoff>"
-                    echo "  -f  fasta file (can be compressed)"
-                    echo "  -o  Output directory (default: LULU_OTU_CLUSTERING)"
+                    echo "Usage: $0 -f <fasta_file> -o <output_directory> -t <otu_table> -s <similarity_cutoff>"
+                    echo "  -f  Fasta file (can be compressed)"
+                    echo "  -o  Output directory (default: 03_LULU_OTU_CLUSTERING)"
                     echo "  -s  Identity percentage for curation (default: 0.95)"
                     echo "  -h  Show this help message"
-		    echo "  -t  OTU table (OTU_name tab_sep sample1... ) (can be compressed)"
-		    echo "  -c  OTU table complete (OTU_name abundance length... sample1... ) from the last step (can be compressed)"
+                    echo "  -m  Command to run MUMU (default: mumu)"
+		    		echo "  -t  OTU table without metadata(OTU_name tab_sep sample1... ) (can be compressed)"
+		   	 		echo "  -c  OTU table complete with metadata (OTU_name abundance length... sample1... ) from the last step (can be compressed)"
+                    echo "  -n  Number of CPU cores to use (default = 1)"
                     exit 0
                     ;;
                 f)
@@ -44,15 +43,37 @@ do
                 t)
                     OTU_TABLE="$OPTARG"
                     ;;
-		c)
-		    COMPLETE_OTU_TABLE="$OPTARG"
-		    ;;
+             	m)
+                    MUMU="$OPTARG"
+                    ;;
+				c)
+		    		COMPLETE_OTU_TABLE="$OPTARG"
+		    		;;
+		    	n)
+		    		NB_CORES="$OPTARG"
+		    		;;
         esac
 done
+
+
+if [ -z "$OUTPUT_DIR" ]; then
+    OUTPUT_DIR="$(pwd)/03_LULU_OTU_CLUSTERING"
+    mkdir -p "$OUTPUT_DIR"
+fi
+
+if [ -z "$MUMU" ]; then
+    MUMU="mumu"
+fi
+
+if [ -z "$IDENTITY_PERCENTAGE" ]; then
+    IDENTITY_PERCENTAGE=0.95
+fi
+
 
 DIR="$(pwd)"
 cd $DIR
 mkdir -p $OUTPUT_DIR
+
 
 # First step: Build the match list file
 vsearch \
@@ -67,16 +88,17 @@ vsearch \
       --userfields query+target+id \
       --maxaccepts 0 \
       --maxhits    0 \
-      --threads    8 \
+      --threads    $NB_CORES \
       --userout    $OUTPUT_DIR/LULU_match_list.txt
 
-#To get only the name and not the name;size=... in ordre to match the name on your OTU table
+# To get only the name and not the name;size=... in order to match the name on the OTU table
 sed -E 's/;size=[0-9]+//g; s/;//g' $OUTPUT_DIR/LULU_match_list.txt > $OUTPUT_DIR/LULU_match_list_clean.txt
 mv $OUTPUT_DIR/LULU_match_list_clean.txt $OUTPUT_DIR/LULU_match_list.txt
 
-#Second step: Running MUMU
 
-#For compressed OTU table (*.gz)
+# Second step: Running MUMU
+
+# For compressed OTU table (*.gz)
 if [[ "$OTU_TABLE" == *.gz ]]; then
 	gunzip --stdout "$OTU_TABLE" > "$OUTPUT_DIR/tmp_OTU_table.txt"
 else
@@ -86,19 +108,17 @@ fi
 
 MATCH=$(awk -v a=${IDENTITY_PERCENTAGE} 'BEGIN {print(a*100) }')
 
-#Same parameters used in NextITS pipeline
-mumu/mumu \
+$MUMU \
       --otu_table     $OUTPUT_DIR/tmp_OTU_table.txt \
       --match_list    $OUTPUT_DIR/LULU_match_list.txt \
       --new_otu_table $OUTPUT_DIR/OTU_table_LULU.txt \
       --log 	      $OUTPUT_DIR/LULU_merging_statistics.txt \
-      --threads                      8 \
       --minimum_match                ${MATCH} \
       --minimum_ratio                1 \
       --minimum_ratio_type           "min" \
       --minimum_relative_cooccurence 0.95
 
-#To get the full OTU_TABLE after LULU
+# To get the full OTU_TABLE after LULU:
 
 if [[ "$COMPLETE_OTU_TABLE" == *.gz ]]; then
         gunzip --stdout "$COMPLETE_OTU_TABLE" > "$OUTPUT_DIR/tmp_OTU_table_full.txt"
@@ -106,9 +126,9 @@ else
         cp $COMPLETE_OTU_TABLE  $OUTPUT_DIR/tmp_OTU_table_full.txt
 fi
 awk 'NR==FNR{
-    # lire OTU_table_OTU_filtered.txt pour stocker infos par amplicon
+    # red OTU_table_OTU_filtered.txt to stock infos per amplicon
     if(FNR>1){
-        key=$3        # colonne amplicon
+        key=$3        # amplicon column
         abundance[key]=$2
         lengtha[key]=$4
         chimera[key]=$5
@@ -119,15 +139,15 @@ awk 'NR==FNR{
     next
 }
 FNR==1{
-    # entête du fichier OTU_table_LULU.txt
+    # header of file OTU_table_LULU.txt
     print "amplicon\tabundance\tlength\tchimera\tspread\tidentity\ttaxonomy\t"$0
     next
 }
 {
     key=$1
-    # rajouter infos du OTU_filtered si existantes
+    # add infos of OTU_filtered if exist
     printf "%s\t%s\t%s\t%s\t%s\t%s\t%s", key, abundance[key], lengtha[key], chimera[key], spread[key], identity[key], taxonomy[key]
-    # rajouter colonnes samples du fichier LULU
+    # add columns samples of LULU file
     for(i=2;i<=NF;i++) printf "\t%s",$i
     print ""
 }'  $OUTPUT_DIR/tmp_OTU_table_full.txt $OUTPUT_DIR/OTU_table_LULU.txt > $OUTPUT_DIR/tmp2_OTU_table_LULU_full.txt

@@ -7,8 +7,8 @@
 
 # from __future__ import print_function
 
-__author__ = "Frédéric Mahé <frederic.mahe@cirad.fr> modified by Benoit Perez-Lamarque <benoit.perez@ens.fr>"
-__date__ = "2020/07/18"
+__author__ = "Frédéric Mahé <frederic.mahe@cirad.fr> modified by Benoit Perez-Lamarque <benoit.perez-lamarque@utoulouse.fr>"
+__date__ = "2025/12/14"
 __version__ = "$Revision: 5.0"
 
 import os
@@ -37,7 +37,6 @@ def representatives_parse():
                 amplicon = line.strip(">;\n").split(separator)[0]
             else:
                 representatives[amplicon] = line.strip()
-
     return representatives
 
 
@@ -56,25 +55,23 @@ def stats_parse():
     sorted_stats = sorted(stats.items(),
                           key=operator.itemgetter(1, 0))
     sorted_stats.reverse()
-
     return stats, sorted_stats
 
 
 def swarms_parse():
     """
-    Map OTUs.
+    Map amplicons to OTUs.
     """
-    separator = "_[0-9]+|;size=[0-9]+;?| "  # parsing of abundance annotations
     swarms_file = sys.argv[3]
     swarms = dict()
     with open(swarms_file, "r") as swarms_file:
         for line in swarms_file:
             line = line.strip()
-            amplicons = re.split(separator, line)[0::2]
+            clean_line = re.sub(r";size=\d+", "", line) # parsing of abundance annotations
+            amplicons = clean_line.split()
             seed = amplicons[0]
             amplicons = [string for string in amplicons if string != '']
             swarms[seed] = [np.unique(amplicons)]
-            
     return swarms
 
 
@@ -97,7 +94,6 @@ def uchime_parse():
             except IndexError:  # deal with unfinished chimera detection runs
                 status = "NA"
             uchime[seed] = status
-
     return uchime
 
 
@@ -109,7 +105,6 @@ def stampa_parse():
     separator = "\t"
     stampa_file = sys.argv[5]
     method = sys.argv[6]  # "vsearch" or "sintax"
-
     stampa = dict()
     with open(stampa_file, "r") as f:
         for line in f:
@@ -185,7 +180,8 @@ def print_table(representatives, stats, sorted_stats,
         for amplicons in swarms[seed]:
             for amplicon in amplicons:
                 for sample in samples:
-                    occurrences[sample] += amplicons2samples[amplicon].get(sample, 0)
+                	occurrences[sample] += amplicons2samples[amplicon].get(sample, 0)
+        
         spread = len([occurrences[sample] for sample in samples if occurrences[sample] > 0])
 
 
