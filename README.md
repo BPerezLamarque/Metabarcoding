@@ -146,7 +146,6 @@ This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/02
 -m  Method for taxonomic assignment: "vsearch" or "sintax" (default: "vsearch")
 -d  Path to the database for taxonomic assignment
 -p  SINTAX probability cutoff (default: 0.5)
--t  Perform a TagJump filtration (default = true)
 -x  Minimum number of reads of an OTU to perform taxonomic assignment
 -n  Number of CPU cores to use (default: 1)
 ```
