@@ -131,8 +131,7 @@ This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/02
 
 **Additional software depending on options:**
 * swarm ≥ 3.1.3
-* SeqKit ≥ 2.9.0
-* R ≥ 4.4.0
+
 
 **Required inputs and parameters:**
 

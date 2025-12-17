@@ -4,7 +4,7 @@
 
 # This script performs OTU clustering using VSEARCH and generates a contingency table.
 # It requires the following software: VSEARCH 2.29.3, Python 3.11.1.
-# Depending on the options, it may also require swarm 3.1.3, SeqKit 2.9.0 and R 4.4.0. 
+# Depending on the options, it may also require swarm 3.1.3. 
 # It also requires the following parameters: path to the directory containing input fasta files, path to the database, path to the scripts, output directory, abundance threshold, and identity percentage.
 
 
