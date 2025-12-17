@@ -283,12 +283,12 @@ else
     			--userout $OUTPUT_DIR/taxonomy_OTU_vsearch.txt
 
 	elif [ "$METHOD" = "sintax" ]; then
-		echo "Running sintax assignation with vsearch on: $OUTPUT_DIR/reads_OTU_nonchimeras_min_reads.fasta"
-		vsearch --sintax $OUTPUT_DIR/reads_OTU_nonchimeras_min_reads.fasta   \
-			--db $path_to_db  \
+		echo "Running sintax assignation with sintax on: $OUTPUT_DIR/reads_OTU_nonchimeras_min_reads.fasta"
+		vsearch --sintax $OUTPUT_DIR/reads_OTU_nonchimeras_min_reads.fasta \
+				--db $path_to_db \
         		--sintax_cutoff $CUTOFF_PROB \
-        		--tabbedout  $OUTPUT_DIR/taxonomy_OTU_sintax.txt    \
-        		--strand plus    \
+        		--tabbedout $OUTPUT_DIR/taxonomy_OTU_sintax.txt \
+        		--strand plus \
         		--threads $NB_CORES
 	fi
 fi
@@ -369,12 +369,13 @@ if [ "$remove" = true ]; then
     rm -f "$OUTPUT_DIR/reads_OTU.uchime"
     rm -f "$OUTPUT_DIR/reads_OTU_nonchimeras_min_reads.fasta"
     rm -f "$FINAL_FASTA"
+    rm -f "$OUTPUT_DIR/stats_file_OTU.txt"
 
     if [ "$CLUSTER" = "vsearch" ]; then
         rm -f "$OUTPUT_DIR/UNOISE.uc"
         rm -f "$OUTPUT_DIR/UNOISE_hits.uc"
     	rm -f "$OUTPUT_DIR/reads_OTU.fasta"
-        rm -f "$OUTPUT_DIR/clusters_OTU.uc"
+        rm -f "$OUTPUT_DIR/clusters"*".uc"
         rm -f "$OUTPUT_DIR/reads_mapped_OTU.txt"
         rm -f "$OUTPUT_DIR/clusters_OTU_full.uc.uc"
     fi

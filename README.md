@@ -203,7 +203,8 @@ bash 03_LULU_curation.sh \
     -f "$OUT_DIR/reads_OTU_nonchimeras.fasta" \
     -t "$OUT_DIR/pre_LULU_match.txt" \
     -o SWARM_USEARCH_LULU_OTU_CLUSTERING \
-    -c "$OUT_DIR/OTU_table_OTU_filtered.txt"
+    -c "$OUT_DIR/OTU_table_OTU_filtered.txt" \
+	-s 0.97
 ```
 
 

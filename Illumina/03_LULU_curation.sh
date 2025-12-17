@@ -116,7 +116,7 @@ $MUMU \
       --minimum_match                ${MATCH} \
       --minimum_ratio                1 \
       --minimum_ratio_type           "min" \
-      --minimum_relative_cooccurence 0.95
+      --minimum_relative_cooccurence 0.90
 
 # To get the full OTU_TABLE after LULU:
 

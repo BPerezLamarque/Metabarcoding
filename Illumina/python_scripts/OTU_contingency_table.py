@@ -113,10 +113,18 @@ def stampa_parse():
                 amplicon, abundance = amplicon.split(";size=")
                 identity = float(identity) / 100
                 stampa[amplicon] = (identity, taxonomy)
+                print("test")
+                print(stampa[amplicon])
             elif method == "sintax":
-                amplicon, tax_prob, separator, taxonomy = line.strip().split("\t")
+                parts = line.strip().split("\t")
+                while len(parts) < 4:
+                    parts.append("*")  # Fill missing columns with "*"
+                parts = parts[:4]
+                amplicon, tax_prob, separator, taxonomy = parts
+                #amplicon, tax_prob, separator, taxonomy = line.strip().split("\t")
                 amplicon, abundance = amplicon.split(";size=")
                 stampa[amplicon] = (tax_prob, taxonomy)
+
     return stampa
 
 
@@ -189,8 +197,7 @@ def print_table(representatives, stats, sorted_stats,
             chimera_status = uchime[seed]
         else:
             chimera_status = "NA"
-
-
+            
         if seed in stampa:
             data = stampa[seed]
             if method == "vsearch":

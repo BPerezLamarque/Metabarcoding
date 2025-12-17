@@ -113,9 +113,16 @@ else
     CUTADAPT="cutadapt --minimum-length ${MIN_LENGTH} --no-indels -e ${ERROR_RATE}"
 fi
 
+
 ${command} "${INPUT}" | sed '/^>/ ! s/U/T/g' | \
-        ${CUTADAPT} -g "${PRIMER_F}" -O "${MIN_F}" - 2> "${LOG}" | \
-		sed '/^>/ s/|/;/g ; /^>/ s/ /_/g' > "${OUTPUT}"
+	${CUTADAPT} -g "${PRIMER_F}" -O "${MIN_F}" - 2> "${LOG}" | \
+	sed '/^>/ {
+		s/|/,/g
+  		s/;/,/g
+  		s|__|:|g
+  		s/ /_/g
+		s/^>\([^,]*\),/>\1;tax=/
+		}' > "${OUTPUT}"
 
 
 # Trim reverse
@@ -128,6 +135,12 @@ fi
 
 ${command} "${OUTPUT}" | sed '/^>/ ! s/U/T/g' | \
 	${CUTADAPT} -a "${ANTI_PRIMER_R}" -O "${MIN_R}" - 2> "${LOG_R}" | \
-	sed '/^>/ s/|/;/g ; /^>/ s/ /_/g' > "${OUTPUT_R}"
+	sed '/^>/ {
+		s/|/,/g
+  		s/;/,/g
+  		s|__|:|g
+  		s/ /_/g
+		}' > "${OUTPUT_R}"
+
 
 rm $OUTPUT
