@@ -15,8 +15,9 @@
 
 
 NB_CORES=1
+NAME="final"
 
-while getopts "hf:o:s:t:c:m:n:" option
+while getopts "hf:o:s:t:c:m:n:x:" option
 do
         case $option in
                 h)
@@ -29,6 +30,7 @@ do
 		    		echo "  -t  OTU table without metadata(OTU_name tab_sep sample1... ) (can be compressed)"
 		   	 		echo "  -c  OTU table complete with metadata (OTU_name abundance length... sample1... ) from the last step (can be compressed)"
                     echo "  -n  Number of CPU cores to use (default = 1)"
+                    echo "  -x  Name of the run"
                     exit 0
                     ;;
                 f)
@@ -51,6 +53,9 @@ do
 		    		;;
 		    	n)
 		    		NB_CORES="$OPTARG"
+		    		;;
+		    	x)
+		    		NAME="$OPTARG"
 		    		;;
         esac
 done
@@ -157,4 +162,26 @@ sed 1d  $OUTPUT_DIR/tmp2_OTU_table_LULU_full.txt | sort -k2 -rn > $OUTPUT_DIR/tm
 
 cat $OUTPUT_DIR/tmp_header $OUTPUT_DIR/tmp3_OTU_table_LULU_full.txt > $OUTPUT_DIR/OTU_table_LULU_full.txt
 
+
+# recalculate the abundance of each OTU
+awk '
+NR==1 { print; next }          # keep header unchanged
+{
+    sum = 0
+    for (i = 8; i <= NF; i++) {
+        sum += $i
+    }
+    $2 = sum                    # replace 2nd column
+    print
+}
+' $OUTPUT_DIR/OTU_table_LULU_full.txt > "$OUTPUT_DIR/OTU_table_"$NAME"_LULU_full.txt"
+
+
+
+
+cat $OUTPUT_DIR/OTU_table_LULU.txt > "$OUTPUT_DIR/OTU_table_"$NAME"_LULU.txt"
+
+
+rm $OUTPUT_DIR/OTU_table_LULU_full.txt
+rm $OUTPUT_DIR/OTU_table_LULU.txt
 rm $OUTPUT_DIR/tmp*

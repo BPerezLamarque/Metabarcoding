@@ -113,8 +113,6 @@ def stampa_parse():
                 amplicon, abundance = amplicon.split(";size=")
                 identity = float(identity) / 100
                 stampa[amplicon] = (identity, taxonomy)
-                print("test")
-                print(stampa[amplicon])
             elif method == "sintax":
                 parts = line.strip().split("\t")
                 while len(parts) < 4:

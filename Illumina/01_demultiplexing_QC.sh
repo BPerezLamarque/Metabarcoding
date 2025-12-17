@@ -81,6 +81,8 @@ echo "Merge the paired-end reads"
 mkdir -p $OUTPUT_DIR/merged_reads/
 
 for sample in $(cat $OUTPUT_DIR/list_sample.txt); do
+
+	echo $sample
     
     INPUT_R1=$(ls $INPUT_FILES | grep -E "${sample}_R1\.(fastq\.gz|fastq)$")
     INPUT_R2=$(ls $INPUT_FILES | grep -E "${sample}_R2\.(fastq\.gz|fastq)$")
@@ -106,6 +108,8 @@ echo "Checking the quality with FASTQC"
 mkdir -p $OUTPUT_DIR/FastQC/
 
 for sample in $(cat $OUTPUT_DIR/list_sample.txt); do
+
+	echo $sample
     
     INPUT="$OUTPUT_DIR/merged_reads/"$sample".fastq"
     
@@ -138,13 +142,15 @@ done
 
 # Check if the mapping file is specified, if not, dereplicate the sequences at the sample level and end here
 if [ -z "$MAPPING" ]; then
-    mkdir -p $OUTPUT_DIR/merged_derep_reads/
+    #mkdir -p $OUTPUT_DIR/merged_derep_reads/
+    mkdir -p $OUTPUT_DIR/Demultiplexed_data/
     for sample in $(cat $OUTPUT_DIR/list_sample.txt); do
 
     echo $sample
 
     INPUT="$OUTPUT_DIR/merged_reads/"$sample".fasta"  # fasta
-    OUTPUT="$OUTPUT_DIR/merged_derep_reads/"$sample"_dereplicated.fasta"  # fasta
+    FINAL_FASTA=$OUTPUT_DIR/Demultiplexed_data/${SAMPLE_NAME}".fas"
+        
 
      # Dereplicate at the sample level
     vsearch --quiet \
@@ -154,7 +160,7 @@ if [ -z "$MAPPING" ]; then
         --sizeout \
         --fasta_width 0 \
         --relabel_sha1 \
-        --output "${OUTPUT}"
+        --output "${FINAL_FASTA}"
 
     done
     exit 0

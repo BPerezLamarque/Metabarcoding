@@ -314,13 +314,30 @@ if [ "$METHOD" = "sintax" ]; then
 	ASSIGNMENTS="$OUTPUT_DIR/taxonomy_OTU_sintax.txt"
 elif [ "$METHOD" = "vsearch" ]; then
 	# Keep one line per OTU
-	awk '{
-		  otu=$1; id=$2
-		  if (!(otu in best) || id>best[otu]) { best[otu]=id; line[otu]=$0 }
-		  if (!(otu in seen_order)) { seen_order[otu]=NR; order[NR]=otu }
-	} END {
-		  for(i=1;i<=NR;i++){ otu=order[i]; if(otu in line){ print line[otu]; delete line[otu] } }
-	}' "$OUTPUT_DIR/taxonomy_OTU_vsearch.txt" > "$OUTPUT_DIR/taxonomy_OTU_vsearch_sorted.txt"
+	if [ -f "$OUTPUT_DIR/taxonomy_OTU_vsearch.txt" ]; then
+    awk '{
+        otu = $1
+        id  = $2
+        if (!(otu in best) || id > best[otu]) {
+            best[otu] = id
+            line[otu] = $0
+        }
+        if (!(otu in seen_order)) {
+            seen_order[otu] = NR
+            order[NR] = otu
+        }
+    }
+    END {
+        for (i = 1; i <= NR; i++) {
+            otu = order[i]
+            if (otu in line) {
+                print line[otu]
+                delete line[otu]
+            }
+        }
+    }' "$OUTPUT_DIR/taxonomy_OTU_vsearch.txt" \
+    > "$OUTPUT_DIR/taxonomy_OTU_vsearch_sorted.txt"
+	fi
 	ASSIGNMENTS="$OUTPUT_DIR/taxonomy_OTU_vsearch_sorted.txt"
 fi
 
@@ -343,7 +360,8 @@ python3 \
    
 FILTERED="${OTU_TABLE/.txt/_filtered.txt}"
 head -n 1 "${OTU_TABLE}" > "${FILTERED}"
-cat "${OTU_TABLE}" | awk '$5 == "N" && $4 >= 50' >> "${FILTERED}"
+awk '$5 == "N" && $4 >= 50 { gsub(/;/,","); print }' "${OTU_TABLE}" >> "${FILTERED}"
+
 
 #In order to prepare the LULU step
 cut -f3,9- "${FILTERED}" > $OUTPUT_DIR/pre_LULU_match.txt

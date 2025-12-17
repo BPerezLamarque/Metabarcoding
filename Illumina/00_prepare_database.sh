@@ -121,7 +121,6 @@ ${command} "${INPUT}" | sed '/^>/ ! s/U/T/g' | \
   		s/;/,/g
   		s|__|:|g
   		s/ /_/g
-		s/^>\([^,]*\),/>\1;tax=/
 		}' > "${OUTPUT}"
 
 
@@ -140,6 +139,7 @@ ${command} "${OUTPUT}" | sed '/^>/ ! s/U/T/g' | \
   		s/;/,/g
   		s|__|:|g
   		s/ /_/g
+  		s/^>\([^,]*\),/>\1;tax=/
 		}' > "${OUTPUT_R}"
 
 
