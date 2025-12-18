@@ -144,18 +144,43 @@ done
 if [ -z "$MAPPING" ]; then
     #mkdir -p $OUTPUT_DIR/merged_derep_reads/
     mkdir -p $OUTPUT_DIR/Demultiplexed_data/
+    
     for sample in $(cat $OUTPUT_DIR/list_sample.txt); do
 
     echo $sample
 
     INPUT="$OUTPUT_DIR/merged_reads/"$sample".fasta"  # fasta
-    FINAL_FASTA=$OUTPUT_DIR/Demultiplexed_data/${SAMPLE_NAME}".fas"
-        
+    OUTPUT="$OUTPUT_DIR/merged_reads/"$sample"_no_primers.fasta"  # fasta
+    FINAL_FASTA="$OUTPUT_DIR/Demultiplexed_data/"$sample".fas"
+    
+    
+    ### If still present, remove the primers
+    remove=false
 
+	if [ "$remove" = true ]; then
+		FwPrimer="CAGCCGCGGTAATTCCAGCT"
+        RevPrimer="GAACCCAAACACTTTGGTTTCC"
+        RevPrimerRC=$( echo "${RevPrimer}" | tr ACGTacgtYyMmRrKkBbVvDdHh TGCAtgcaRrKkYyMmVvBbHhDd | rev )
+        SEQTOT="${FwPrimer}${RevPrimerRC}"
+        MIN_MATCHED=${#SEQTOT}
+        ERROR_RATE=0
+        cutadapt \
+			--cores "$NB_CORES" \
+   		 	-g "${FwPrimer}...${RevPrimerRC}" \
+    		--discard-untrimmed \
+    		--minimum-length 80 \
+    		-O "${MIN_MATCHED}" \
+    		-e "${ERROR_RATE}" \
+    		-o "$OUTPUT" \
+    		"$INPUT"
+	fi
+    if [ "$remove" = true ]; then
+    	cat $INPUT > $OUTPUT
+    fi
      # Dereplicate at the sample level
     vsearch --quiet \
         --threads $NB_CORES \
-        --derep_fulllength "temp_"$sample".fasta" \
+        --derep_fulllength $OUTPUT \
         --sizein \
         --sizeout \
         --fasta_width 0 \
@@ -163,6 +188,11 @@ if [ -z "$MAPPING" ]; then
         --output "${FINAL_FASTA}"
 
     done
+    
+    rm -f "${OUTPUT_DIR}/temp_decompressed.fastq" 
+	rm -f "${OUTPUT_DIR}/merged_reads/"*"fastq"
+	rm -f "${OUTPUT_DIR}/merged_reads/"*"fasta"
+	
     exit 0
 fi
 
@@ -226,7 +256,7 @@ while read -r line; do
             MIN_MATCHED=${#SEQTOT}
             ERROR_RATE=0
 
-            cat "${INPUT}" "${INPUT_REVCOMP}" | cutadapt --cores 0 -g "${FwBarcode}${FwPrimer}...${RevPrimerRC}${RevBarcodeRC}" --discard-untrimmed --minimum-length "${MIN_LENGTH}" -O ${MIN_MATCHED} -e "${ERROR_RATE}" - 2> "${LOG}" > "$OUTPUT_DIR/tmp_demux/temp_${SAMPLE_NAME}.fasta"
+            cat "${INPUT}" "${INPUT_REVCOMP}" | cutadapt --cores $NB_CORES -g "${FwBarcode}${FwPrimer}...${RevPrimerRC}${RevBarcodeRC}" --discard-untrimmed --minimum-length "${MIN_LENGTH}" -O ${MIN_MATCHED} -e "${ERROR_RATE}" - 2> "${LOG}" > "$OUTPUT_DIR/tmp_demux/temp_${SAMPLE_NAME}.fasta"
         }
 
         trim_without_ambiguity

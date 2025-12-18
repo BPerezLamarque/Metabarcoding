@@ -18,7 +18,7 @@ CUTOFF_PROB=0.5
 RESUME="true"
 MIN_READS=2
 
-while getopts "hi:o:s:u:v:c:m:d:p:r:t:x:n:" option
+while getopts "hi:o:s:u:v:c:m:d:p:r:x:n:" option
 do
         case $option in
                 h)
@@ -242,6 +242,7 @@ else
 	echo "Running de novo chimera detection with vsearch on: $FINAL_FASTA"
 	vsearch --uchime_denovo "$FINAL_FASTA" \
 		--uchimeout $OUTPUT_DIR/reads_OTU.uchime \
+		--fasta_width 0 \
 		--nonchimeras $OUTPUT_DIR/reads_OTU_nonchimeras.fasta
 fi
 

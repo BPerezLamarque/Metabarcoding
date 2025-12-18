@@ -101,8 +101,8 @@ ANTI_PRIMER_R=$( echo "${PRIMER_R}" | tr ACGTacgtYyMmRrKkBbVvDdHh TGCAtgcaRrKkYy
 
 
 # Paramerers of cutadapt
-MIN_F=$(( ${#PRIMER_F} * 2 / 3 )) # should match at least 66% of the forward primer
-MIN_R=$(( ${#ANTI_PRIMER_R} * 2 / 3 )) # should match at least 66% of the reverse primer
+MIN_F=$(( ${#PRIMER_F} / 2 )) # should match at least 50% of the forward primer
+MIN_R=$(( ${#ANTI_PRIMER_R} /2 )) # should match at least 50% of the reverse primer
 ERROR_RATE=0.10
 
 
@@ -132,7 +132,7 @@ else
 fi
 
 
-${command} "${OUTPUT}" | sed '/^>/ ! s/U/T/g' | \
+cat "${OUTPUT}" | sed '/^>/ ! s/U/T/g' | \
 	${CUTADAPT} -a "${ANTI_PRIMER_R}" -O "${MIN_R}" - 2> "${LOG_R}" | \
 	sed '/^>/ {
 		s/|/,/g
