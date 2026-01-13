@@ -4,7 +4,7 @@
 #SBATCH --job-name=01_NextITS
 #SBATCH --output=./01_NextITS.out
 #SBATCH --error=./01_NextITS.err
-#SBATCH --cpus-per-task=20
+#SBATCH --cpus-per-task=3
 #SBATCH --time=72:00:00
 #SBATCH --mem=36G
 
@@ -13,11 +13,11 @@ module load bioinfo/Nextflow/25.04.0
 module load containers/singularity/3.9.9 
 module load devel/java/17.0.6
 
-#To get the latest version of NextITS from the GitHub 
+#To get the latest version of NextITS from GitHub 
 nextflow pull vmikk/NextITS
 
 #To get the nextits.sif file to load all the module and packages to run NextITS
-singularity pull nextits.sif docker://vmikk/nextits:1.1.0
+singularity pull nextits.sif docker://vmikk/nextits:1.1.0
 
 #To get the help message with all the option and their meanings
 nextflow run vmikk/NextITS --help
