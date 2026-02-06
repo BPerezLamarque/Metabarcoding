@@ -4,8 +4,8 @@
 #SBATCH --job-name=01_NextITS
 #SBATCH --output=./01_NextITS.out
 #SBATCH --error=./01_NextITS.err
-#SBATCH --cpus-per-task=3
-#SBATCH --time=72:00:00
+#SBATCH --cpus-per-task=10
+#SBATCH --time=96:00:00
 #SBATCH --mem=36G
 
 
