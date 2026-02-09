@@ -23,4 +23,4 @@ nextflow run vmikk/NextITS -r main \
   --otu_iddef 2 \
   --lulu "true" \
   --outdir     "Step2_vsearch" \
-  -with-singularity "$(pwd)/../nextits.sif"
+  -with-singularity "$(pwd)/nextits.sif"

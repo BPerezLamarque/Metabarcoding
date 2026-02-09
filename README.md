@@ -83,7 +83,7 @@ This step (https://github.com/BPerezLamarque/Metabarcoding/blob/main/Illumina/01
 * FastQC ≥ 0.12.1
 
 **Required inputs:**
-* Path to the directory containing the raw FASTQ files
+* Path to the directory containing the raw FASTQ files (the R1 and R2 files must contains "R1" and "R2" at the end of their file names)
 * A mapping file for demultiplexing (optional)
 * A minimum sequence length required to keep the sequences during demultiplexing (**-l**)
 

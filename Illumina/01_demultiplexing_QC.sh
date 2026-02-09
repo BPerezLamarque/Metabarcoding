@@ -62,7 +62,7 @@ ls $INPUT_FILES | sed 's#.*/##' | sed 's/.f.*//' | sed 's/_R[12].*//' | sort -u 
 # Check the quality encoding (33 or 64?)
 OUTPUT="$OUTPUT_DIR/Quality.encoding.log"
 FIRST_SAMPLE=$(head -n 1 $OUTPUT_DIR/list_sample.txt)
-INPUT_SAMPLE=$(ls $INPUT_FILES | grep -E "${FIRST_SAMPLE}_R1\.(fastq\.gz|fastq)$")
+INPUT_SAMPLE=$(ls $INPUT_FILES | grep -E "${FIRST_SAMPLE}_R1\.(fastq\.gz|fastq|fq\.gz|fq)$")
 
 if file "$INPUT_SAMPLE" | grep -q "compressed"; then
     zcat "$INPUT_SAMPLE" > $OUTPUT_DIR/temp_decompressed.fastq
@@ -84,8 +84,8 @@ for sample in $(cat $OUTPUT_DIR/list_sample.txt); do
 
 	echo $sample
     
-    INPUT_R1=$(ls $INPUT_FILES | grep -E "${sample}_R1\.(fastq\.gz|fastq)$")
-    INPUT_R2=$(ls $INPUT_FILES | grep -E "${sample}_R2\.(fastq\.gz|fastq)$")
+    INPUT_R1=$(ls $INPUT_FILES | grep -E "${sample}_R1\.(fastq\.gz|fastq|fq\.gz|fq)$")
+    INPUT_R2=$(ls $INPUT_FILES | grep -E "${sample}_R2\.(fastq\.gz|fastq|fq\.gz|fq)$")
 
     OUTPUT="$OUTPUT_DIR/merged_reads/"$sample".fastq"
 
