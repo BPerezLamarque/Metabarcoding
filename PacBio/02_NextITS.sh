@@ -1,9 +1,8 @@
 #!/bin/bash
 
 #SBATCH --partition=workq
-#SBATCH --job-name=02_NextITS
-#SBATCH --output=./logs/02_NextITS.out
-#SBATCH --error=./logs/02_NextITS.err
+#SBATCH --output=out/output_%x
+#SBATCH --error=out/error_%x
 #SBATCH --cpus-per-task=10
 #SBATCH --time=96:00:00
 #SBATCH --mem=36G

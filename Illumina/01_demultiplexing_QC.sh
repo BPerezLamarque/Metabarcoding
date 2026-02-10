@@ -277,7 +277,8 @@ done < "${MAPPING}"
 # Note: the option sha1 (encoding system) is giving the same names to the identical amplicons across samples
 
 # Remove the files that are no longer useful
-rm -f "${INPUT}" "${INPUT_REVCOMP}" "temp.fastq" "temp.fasta" "${OUTPUT_DIR}/temp_decompressed.fastq" 
+rm -f "${INPUT}" "${INPUT_REVCOMP}" 
+rm -f "temp.fastq" "temp.fasta" "${OUTPUT_DIR}/temp_decompressed.fastq" 
 rm -rf "${OUTPUT_DIR}/tmp_demux/"
 rm -f "${OUTPUT_DIR}/merged_reads/"*"fastq"
 rm -f "${OUTPUT_DIR}/merged_reads/"*"fasta"
