@@ -130,10 +130,10 @@ if [[ "$COMPLETE_OTU_TABLE" == *.gz ]]; then
 else
         cp $COMPLETE_OTU_TABLE  $OUTPUT_DIR/tmp_OTU_table_full.txt
 fi
-awk 'NR==FNR{
-    # red OTU_table_OTU_filtered.txt to stock infos per amplicon
+awk 'BEGIN { FS=OFS="\t" }
+NR==FNR {
     if(FNR>1){
-        key=$3        # amplicon column
+        key=$3
         abundance[key]=$2
         lengtha[key]=$4
         chimera[key]=$5
@@ -143,19 +143,28 @@ awk 'NR==FNR{
     }
     next
 }
-FNR==1{
-    # header of file OTU_table_LULU.txt
-    print "amplicon\tabundance\tlength\tchimera\tspread\tidentity\ttaxonomy\t"$0
+FNR==1 {
+    sub(/^amplicon\t/, "", $0)
+
+    # split header into fields
+    n = split($0, header, FS)
+
+    # print new header
+    printf "amplicon\tabundance\tlength\tchimera\tspread\tidentity\ttaxonomy"
+    for(i=1;i<=n;i++) printf "\t%s", header[i]
+    print ""
     next
 }
 {
     key=$1
-    # add infos of OTU_filtered if exist
-    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s", key, abundance[key], lengtha[key], chimera[key], spread[key], identity[key], taxonomy[key]
-    # add columns samples of LULU file
-    for(i=2;i<=NF;i++) printf "\t%s",$i
-    print ""
-}'  $OUTPUT_DIR/tmp_OTU_table_full.txt $OUTPUT_DIR/OTU_table_LULU.txt > $OUTPUT_DIR/tmp2_OTU_table_LULU_full.txt
+    # build full line using fields (NOT printf chains)
+    out = key OFS abundance[key] OFS lengtha[key] OFS chimera[key] OFS spread[key] OFS identity[key] OFS taxonomy[key]
+    for(i=2;i<=NF;i++){
+        out = out OFS $i
+    }
+    print out
+}
+' $OUTPUT_DIR/tmp_OTU_table_full.txt $OUTPUT_DIR/OTU_table_LULU.txt > $OUTPUT_DIR/tmp2_OTU_table_LULU_full.txt
 
 head -1 $OUTPUT_DIR/tmp2_OTU_table_LULU_full.txt > $OUTPUT_DIR/tmp_header
 sed 1d  $OUTPUT_DIR/tmp2_OTU_table_LULU_full.txt | sort -k2 -rn > $OUTPUT_DIR/tmp3_OTU_table_LULU_full.txt
@@ -164,19 +173,17 @@ cat $OUTPUT_DIR/tmp_header $OUTPUT_DIR/tmp3_OTU_table_LULU_full.txt > $OUTPUT_DI
 
 
 # recalculate the abundance of each OTU
-awk '
-NR==1 { print; next }          # keep header unchanged
+awk 'BEGIN { FS=OFS="\t" }
+NR==1 { print; next }
 {
     sum = 0
     for (i = 8; i <= NF; i++) {
         sum += $i
     }
-    $2 = sum                    # replace 2nd column
+    $2 = sum
     print
 }
-' $OUTPUT_DIR/OTU_table_LULU_full.txt > "$OUTPUT_DIR/OTU_table_"$NAME"_LULU_full.txt"
-
-
+' "$OUTPUT_DIR/OTU_table_LULU_full.txt" > "$OUTPUT_DIR/OTU_table_${NAME}_LULU_full.txt"
 
 
 cat $OUTPUT_DIR/OTU_table_LULU.txt > "$OUTPUT_DIR/OTU_table_"$NAME"_LULU.txt"
