@@ -280,5 +280,5 @@ done < "${MAPPING}"
 rm -f "${INPUT}" "${INPUT_REVCOMP}" 
 rm -f "temp.fastq" "temp.fasta" "${OUTPUT_DIR}/temp_decompressed.fastq" 
 rm -rf "${OUTPUT_DIR}/tmp_demux/"
-rm -f "${OUTPUT_DIR}/merged_reads/"*"fastq"
+# rm -f "${OUTPUT_DIR}/merged_reads/"*"fastq" # keep for storage 
 rm -f "${OUTPUT_DIR}/merged_reads/"*"fasta"
