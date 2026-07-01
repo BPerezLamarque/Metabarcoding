@@ -164,7 +164,7 @@ bash 02_OTU_clustering.sh \
     -v "vsearch" \
     -c 0.97 \
     -m "vsearch" \
-    -d "$PATH_DIR_DB/$NAME_DB" \
+    -d $PATH_DIR_DB/$NAME_DB"_trimmed.fasta" \
     -x 2 \
     -n 1 \
     -o "$OUT_DIR"
@@ -301,7 +301,7 @@ This step performs taxonomic assignment using **VSEARCH**, with either the **SIN
 
 ```bash
 vsearch --sintax Path/to/fasta_file_from_step_2 \
-    --db "$PATH_DIR_DB/$NAME_DB" \
+    --db $PATH_DIR_DB/$NAME_DB"_trimmed.fasta" \
     --sintax_cutoff 0.5 \
     --tabbedout Path/to/output_file \
     --strand plus \
@@ -312,7 +312,7 @@ vsearch --sintax Path/to/fasta_file_from_step_2 \
 
 ```bash
 vsearch --usearch_global Path/to/fasta_file_after_step_2 \
-    --db "$PATH_DIR_DB/$NAME_DB" \
+    --db $PATH_DIR_DB/$NAME_DB"_trimmed.fasta" \
     --id 0.7 \
     --iddef 2 \
     --strand plus \
