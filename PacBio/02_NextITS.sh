@@ -8,9 +8,12 @@
 #SBATCH --mem=36G
 
 
-module load bioinfo/Nextflow/25.04.0
-module load containers/singularity/3.9.9 
+module load bioinfo/Nextflow/26.04.6
+module load containers/singularity/3.9.9
 module load devel/java/17.0.6
+
+#To get the latest version of NextITS from GitHub 
+nextflow pull vmikk/NextITS
 
 
 nextflow run vmikk/NextITS -r main \

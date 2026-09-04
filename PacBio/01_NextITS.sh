@@ -8,23 +8,20 @@
 #SBATCH --mem=36G
 
 
-module load bioinfo/Nextflow/25.04.0
-module load containers/singularity/3.9.9 
+module load bioinfo/Nextflow/26.04.6
+module load containers/singularity/3.9.9
 module load devel/java/17.0.6
 
 #To get the latest version of NextITS from GitHub 
 nextflow pull vmikk/NextITS
 
-#To get the nextits.sif file to load all the module and packages to run NextITS
-singularity pull nextits.sif docker://vmikk/nextits:1.1.0
 
-#To get the help message with all the option and their meanings
-nextflow run vmikk/NextITS --help
 
 #Change the primer if it is not the one used for the full ITS region and also adapt the --its_region
 #Not mandatory to use a chimera database, only denovo can be done.
 nextflow run vmikk/NextITS -r main \
   -resume \
+  -profile singularity \
   --demultiplexed true \
   --step "Step1" \
   --input "$(pwd)/path/to/fastq_files" \
@@ -32,8 +29,14 @@ nextflow run vmikk/NextITS -r main \
   --primer_reverse CGCCTSCSCTTANTDATATGC \
   --its_region "full" \
   --hp "true" \
-  --chimera_methods "ref,denovo" \
+  --chimera_methods "denovo" \
   --chimera_db "$(pwd)/path/to/chimera_database" \
   --tj "true" \
-  --outdir  "Step1_Results/test" \
-  -with-singularity "$(pwd)/nextits.sif"
+  --outdir  "Step1_Results/test" 
+
+
+
+
+
+
+
