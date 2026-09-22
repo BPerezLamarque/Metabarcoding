@@ -276,7 +276,7 @@ else
     			--rowlen 0 \
     			--notrunclabels \
     			--userfields query+id+target \
-    			--maxaccepts 10 \
+    			--maxaccepts 3 \
     			--maxrejects 32 \
     			--db $path_to_db \
     			--id 0.7 \
