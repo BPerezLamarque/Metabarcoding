@@ -54,7 +54,7 @@ if [ -z "$INPUT" ]; then
 fi
 
 if [ -z "$NAME" ]; then
-    NAME=$INPUT
+    NAME=${INPUT%.*}
 fi
 
 if [ -z "$OBLIGATE_F" ]; then
@@ -90,10 +90,10 @@ fi
 
 
 # Define variables and output files primers
-OUTPUT=$DIR/${NAME%.*}_trimmed_temp.fasta
-LOG=$DIR/${NAME%.*}_trimmed_temp.log
-OUTPUT_R=$DIR/${NAME%.*}_trimmed.fasta
-LOG_R=$DIR/${NAME%.*}_trimmed.log
+OUTPUT=$DIR/${NAME}_trimmed_temp.fasta
+LOG=$DIR/${NAME}_trimmed_temp.log
+OUTPUT_R=$DIR/${NAME}_trimmed.fasta
+LOG_R=$DIR/${NAME}_trimmed.log
 
 
 # Reverse complement of the reverse primer
